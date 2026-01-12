@@ -1,0 +1,18 @@
+{
+  "deno.enable": true,
+  "deno.lint": true,
+  "typescript.suggest.includeCompletionsForModuleExports": true,
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "files.associations": {
+    "*.ts": "typescript"
+  },
+  "editor.suggest.localityBonus": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "emmet.includeLanguages": {
+    "typescript": "html"
+  }
+}
