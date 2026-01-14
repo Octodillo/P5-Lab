@@ -289,6 +289,16 @@ body {
   margin: 8px 0;
 }
 
+.sketch-controls__tabs {
+  display: contents;
+}
+
+.sketch-controls__tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .sketch-controls__row {
   display: flex;
   gap: 8px;
@@ -389,6 +399,36 @@ body {
   flex: 1;
 }
 
+/* ==========================================================================
+   LABELED CONTROLS (select, text input, number input with external labels)
+   Label appears to the left of the control
+   ========================================================================== */
+
+.sketch-controls label:has(select),
+.sketch-controls label:has(input[type="text"]),
+.sketch-controls label:has(input[type="number"]) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.sketch-controls label:has(select) > span,
+.sketch-controls label:has(input[type="text"]) > span,
+.sketch-controls label:has(input[type="number"]) > span {
+  font-size: 12px;
+  color: #a1a1aa;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sketch-controls label:has(select) select,
+.sketch-controls label:has(input[type="text"]) input,
+.sketch-controls label:has(input[type="number"]) input {
+  flex: 1;
+  min-width: 0;
+}
+
 .sketch-controls__input-group button {
   width: auto;
   padding: 10px 20px;
@@ -407,8 +447,9 @@ body {
 .sketch-controls label:has(input[type="checkbox"]) {
   display: flex;
   align-items: center;
+  justify-content: center;
   width: 100%;
-  padding: 10px 12px 10px 10px;
+  padding: 10px 12px;
   background: #27272a;
   border: 1px solid #3f3f46;
   border-radius: 6px;
@@ -477,8 +518,9 @@ body {
 .sketch-controls label:has(input[type="radio"]) {
   display: flex;
   align-items: center;
+  justify-content: center;
   width: 100%;
-  padding: 10px 12px 10px 10px;
+  padding: 10px 12px;
   background: #27272a;
   border: 1px solid #3f3f46;
   border-radius: 6px;
@@ -609,10 +651,26 @@ body {
 }
 
 .sketch-controls__stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 12px;
   color: #71717a;
   padding: 8px 0;
   font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+}
+
+.sketch-controls__stat-label {
+  font-size: 12px;
+  color: #a1a1aa;
+  font-weight: 500;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.sketch-controls__stat-value {
+  flex: 1;
+  min-width: 0;
 }
 
 .sketch-controls__highlight {

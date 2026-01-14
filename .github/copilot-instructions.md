@@ -8,62 +8,108 @@ Deno-based p5.js playground with live reload. Server transpiles TypeScript on-th
 
 **Key files:**
 
-- `sketches/lib.ts` - Core framework: `SketchController`, `ControlsBuilder`, `P5MouseEvents`, `GlobalControls`
-- `sketches/common.ts` - Re-exports from `lib.ts` + shared utilities (`TupleMap`, `Tuple<T,N>`, `number2`)
+- `sketches/lib.ts` - Core framework: `SketchController`, `P5MouseEvents`
+- `sketches/controls.ts` - Declarative control descriptors and `Controls` class
+- `sketches/common.ts` - Re-exports + utilities (`Map2`, `Set2`, `TupleMap`, `number2`)
 - `static/index.js` - SPA that loads sketches dynamically
-- Sketch-local `lib.ts` files (e.g., `euclidean-construction/lib.ts`) - For bespoke systems/engines
 
 ## Creating a New Sketch
 
 1. Create folder: `sketches/{name}/mod.ts`
 2. Server auto-discovers folders containing `mod.ts`
 
+### Declarative API (Preferred)
+
 ```typescript
 import { SketchController } from "../common.ts";
+import { section, slider, button, row, checkbox } from "../controls.ts";
 
-new SketchController((p, controls) => {
-  // 1. State variables
-  let speed = 50;
+new SketchController(
+  [
+    section("Settings", [
+      slider("speed", 0, 100, 50, 1),
+      row([button("reset", "Reset"), checkbox("loop", "Loop", true)]),
+    ]),
+  ],
+  (p, controls) => {
+    let speed = 50;
+    let loop = true;
 
-  // 2. Build controls (fluent API) - runs before setup
-  controls.section("Settings").slider("Speed", 0, 100, speed, 1, v => {
-    speed = v;
-  });
+    // Subscribe to control changes (called immediately with initial value)
+    controls.subscribe<number>("speed", v => (speed = v));
+    controls.subscribe<boolean>("loop", v => (loop = v));
+    controls.subscribe("reset", () => {
+      /* button click */
+    });
 
-  // 3. Draw loop (canvas auto-created by SketchController)
-  p.draw = () => {
-    p.background(0);
-  };
-}).init();
+    p.draw = () => {
+      p.background(0);
+    };
+  }
+).init();
 ```
 
-**Note:** Override `p.setup` only when you need custom canvas setup (e.g., `p.colorMode`). The `SketchController` handles canvas creation and resize automatically.
+**Note:** Override `p.setup` only for custom canvas setup (e.g., `p.colorMode`). `SketchController` handles canvas creation and resize.
 
-## Controls API (Fluent Builder Pattern)
+## Controls API
 
-Controls are built using chainable methods. See `sketches/demo-controls/mod.ts` for comprehensive examples.
+### Descriptor Functions (from `controls.ts`)
 
 ```typescript
-// Section → row → controls → endRow → back to section
-controls
-  .section("Animation")
-  .row("Playback")
-  .button("Play", () => {})
-  .button("Pause", () => {})
-  .endRow()
-  .slider("Speed", 0, 1, 0.5, 0.1, v => (speed = v))
-  .checkbox("Loop", "Enable loop", true, v => (loop = v))
-  .stat("FPS", ""); // Updateable text display
-
-// Access controls later:
-controls.get("Animation").get<SliderControl>("Speed").setValue(0.8);
+section(label, controls[])     // Container section
+row(inputs[])                  // Horizontal layout
+slider(name, min, max, value, step)
+button(name, label?)
+checkbox(name, label, checked?)
+radio<T>(name, value, label, selected?)
+select(name, options[], selected?)
+option(label, value)
+stat(name, value?)             // Read-only display
+textInput(name, value?, placeholder?)
+numberInput(name, value?, placeholder?)
+tabs(controlName, { panelName: controls[] })  // Conditional panels
+divider()
 ```
 
-**Available controls:** `button`, `slider`, `checkbox`, `select`, `numberInput`, `textInput`, `radio`, `radioGroup` (deprecated), `stat`, `highlight`, `divider`
+### Controls Instance Methods
+
+```typescript
+controls.subscribe<T>(name, callback); // React to changes (returns unsubscribe fn)
+controls.get<T>(name); // Get current value
+controls.set(name, value); // Programmatically update
+controls.about<Desc>(name); // Get descriptor metadata (min/max/options)
+```
+
+### Example: Programmatic Control
+
+```typescript
+// Randomize within slider bounds
+const size = controls.about<SliderDesc>("size")!;
+controls.set("size", p.random(size.min, size.max));
+```
+
+### Example: Conditional Panels with `tabs()`
+
+Use `tabs()` to show different controls based on another control's value:
+
+```typescript
+section("Tool", [
+  row([
+    radio("tool", "draw", "Draw", true),
+    radio("tool", "erase", "Erase"),
+    radio("tool", "select", "Select"),
+  ]),
+  tabs("tool", {
+    draw: [slider("brushSize", 1, 50, 10, 1), select("color", [...])],
+    erase: [slider("eraserSize", 5, 100, 20, 1)],
+    select: [checkbox("multiSelect", "Multi-select", false)],
+  }),
+]),
+```
+
+The `tabs()` control watches the named control (`"tool"`) and shows only the matching panel.
 
 ## Mouse Events
-
-Use `P5MouseEvents` wrapper for typed event handling:
 
 ```typescript
 const mouse = new P5MouseEvents(p);
@@ -78,10 +124,25 @@ mouse.on("wheel", event => {
 });
 ```
 
+## Coordinate Utilities
+
+```typescript
+import { number2, Map2, Set2, TupleMap } from "../common.ts";
+
+const cells = new Map2<Cell>(); // Optimized 2D map: [x, y] → Item
+cells.set([0, 0], cell);
+cells.get([0, 0]);
+
+const visited = new Set2(); // Optimized 2D set: [x, y] existence
+visited.add([1, 2]);
+
+const grid = new TupleMap<Item, 3>(); // N-dimensional: [x, y, z] → Item
+```
+
 ## Development Commands
 
 ```bash
-deno task dev    # Run with --allow-write (for development)
+deno task dev    # Run with --allow-write (development)
 deno task serve  # Run read-only mode
 ```
 
@@ -89,13 +150,13 @@ Server runs at `http://localhost:8000` with WebSocket live reload.
 
 ## TypeScript Conventions
 
-- Imports use URL specifiers: `import p5 from "p5"` maps to esm.sh
+- Imports: `import p5 from "p5"` maps to esm.sh via deno.json
 - Canvas auto-resizes via `ResizeObserver` in `SketchController`
-- Type definitions in `types/p5-global.d.ts` and `static/types.ts`
-- Use `number2` type alias for 2D coordinates: `type number2 = [number, number]`
+- Use `number2` for 2D coordinates: `type number2 = [number, number]`
 
 ## Sketch Examples by Complexity
 
-- **Simple:** `sketches/demo-controls/mod.ts` - Controls showcase, no setup override
-- **Intermediate:** `sketches/life-v2/mod.ts` - Grid interaction, interval simulation, mouse drawing
-- **Complex:** `sketches/euclidean-construction/mod.ts` - Custom lib.ts for geometric engine
+- **Minimal:** `sketches/hello.ts` - Declarative controls, particles, no setup override
+- **Intermediate:** `sketches/demo-controls-v2/mod.ts` - Full declarative API showcase
+- **Complex:** `sketches/life-v2/mod.ts` - Simulation with `Map2`/`Set2`, tabs, model separation
+- **Custom Engine:** `sketches/euclidean-construction/lib.ts` - Sketch-local geometry library

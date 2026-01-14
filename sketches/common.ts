@@ -3,58 +3,19 @@
  */
 
 // Re-export framework
+export { SketchController, P5MouseEvents, GlobalControls } from "./lib.ts";
+
+// Re-export legacy controls API types for backward compatibility
 export {
-  SketchController,
   ControlsBuilder,
   SectionBuilder,
   RowBuilder,
   ButtonControl,
-  SelectControl,
-  NumberInputControl,
-  TextInputControl,
-  StatControl,
-  HighlightControl,
-  CheckboxControl,
   SliderControl,
-  RadioGroupControl,
-  RadioControl,
-  P5MouseEvents,
-  GlobalControls,
-} from "./lib.ts";
-
-// Re-export declarative controls API
-export {
-  // Types
-  type ControlDesc,
-  type SectionDesc,
-  type RowDesc,
-  type RadioDesc,
-  type CheckboxDesc,
-  type SliderDesc,
-  type SelectDesc,
-  type OptionDesc,
-  type StatDesc,
-  type ButtonDesc,
-  type TextInputDesc,
-  type NumberInputDesc,
-  type DividerDesc,
-  type ControlValue,
-  // Factory functions
-  section,
-  row,
-  radio,
-  checkbox,
-  slider,
-  select,
-  option,
-  stat,
-  button,
-  textInput,
-  numberInput,
-  divider,
-  // Classes
-  Controls,
-  ControlsRenderer,
+  CheckboxControl,
+  SelectControl,
+  StatControl,
+  LegacyElement,
 } from "./controls.ts";
 
 export type Tuple<T, N extends number> = N extends N ? (number extends N ? T[] : _TupleOf<T, N, []>) : never;

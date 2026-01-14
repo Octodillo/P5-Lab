@@ -7,6 +7,7 @@ let globalControlsInitialized = false;
 
 // Store reference globally so sketches can attach to it
 window.__p5_instance__ = null;
+window.__sketch_error__ = null;
 
 /**
  * Initialize global controls (only once)
@@ -30,6 +31,7 @@ async function initGlobalControls() {
 async function loadSketches() {
   try {
     const response = await fetch("/api/sketches");
+    /** @type {{id: string, name: string, description?: string}[]} */
     const sketches = await response.json();
 
     const container = document.getElementById("sketches-container");
@@ -44,11 +46,15 @@ async function loadSketches() {
     sketches.forEach(sketch => {
       const item = document.createElement("div");
       item.className = "sketch-item";
+      item.dataset.sketchId = sketch.id;
+      if (sketch.description) {
+        item.title = sketch.description;
+      }
 
       // Create icon element
       const icon = document.createElement("img");
       icon.className = "sketch-icon";
-      icon.src = `/static/icons/${sketch}.svg`;
+      icon.src = `/static/icons/${sketch.id}.svg`;
       icon.alt = "";
       icon.onerror = () => {
         icon.src = "/static/icons/default.svg";
@@ -57,11 +63,11 @@ async function loadSketches() {
       // Create label element
       const label = document.createElement("span");
       label.className = "sketch-label";
-      label.textContent = sketch;
+      label.textContent = sketch.name;
 
       item.appendChild(icon);
       item.appendChild(label);
-      item.addEventListener("click", () => loadSketch(sketch));
+      item.addEventListener("click", () => loadSketch(sketch.id));
       container.appendChild(item);
     });
 
@@ -100,7 +106,7 @@ async function loadSketch(sketchName) {
   try {
     // Update active state in list
     document.querySelectorAll(".sketch-item").forEach(item => {
-      if (item.textContent === sketchName) {
+      if (item.dataset.sketchId === sketchName) {
         item.classList.add("active");
       } else {
         item.classList.remove("active");
@@ -173,9 +179,35 @@ async function loadSketch(sketchName) {
     }
   } catch (error) {
     console.error(`Failed to load sketch "${sketchName}":`, error);
-    const controlsContainer = document.getElementById("controls-container");
-    if (controlsContainer) {
-      controlsContainer.innerHTML = '<div class="controls-empty">Error loading sketch</div>';
+
+    // Set error info for fallback sketch to display
+    window.__sketch_error__ = {
+      sketchName: sketchName,
+      error: error.message || String(error),
+    };
+
+    // Load fallback sketch
+    try {
+      const cacheBuster = Date.now();
+      await import(`/api/src/fallback.ts?t=${cacheBuster}`);
+
+      // Move fallback controls to sidebar
+      setTimeout(() => {
+        const controls = document.querySelector(".sketch-controls:not(.sketch-controls--global)");
+        const controlsContainer = document.getElementById("controls-container");
+        if (controls && controlsContainer) {
+          controlsContainer.innerHTML = "";
+          controls.remove();
+          controls.style.display = "flex";
+          controlsContainer.appendChild(controls);
+        }
+      }, 200);
+    } catch (fallbackError) {
+      console.error("Failed to load fallback sketch:", fallbackError);
+      const controlsContainer = document.getElementById("controls-container");
+      if (controlsContainer) {
+        controlsContainer.innerHTML = '<div class="controls-empty">Error loading sketch</div>';
+      }
     }
   } finally {
     // Always reset the loading flag
@@ -183,10 +215,36 @@ async function loadSketch(sketchName) {
   }
 }
 
+/**
+ * Load the welcome sketch (hello.ts)
+ */
+async function loadWelcomeSketch() {
+  try {
+    const cacheBuster = Date.now();
+    await import(`/api/src/hello.ts?t=${cacheBuster}`);
+
+    // Move controls to sidebar
+    setTimeout(() => {
+      const controls = document.querySelector(".sketch-controls:not(.sketch-controls--global)");
+      const controlsContainer = document.getElementById("controls-container");
+      if (controls && controlsContainer) {
+        controlsContainer.innerHTML = "";
+        controls.remove();
+        controls.style.display = "flex";
+        controlsContainer.appendChild(controls);
+      }
+    }, 200);
+  } catch (error) {
+    console.error("Failed to load welcome sketch:", error);
+  }
+}
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", async () => {
   await initGlobalControls();
-  loadSketches();
+  await loadSketches();
+  // Load welcome sketch on first load
+  await loadWelcomeSketch();
 });
 
 // Handle live reload

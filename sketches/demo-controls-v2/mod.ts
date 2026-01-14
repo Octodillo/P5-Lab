@@ -1,22 +1,26 @@
+import { SketchController } from "../common.ts";
 import {
-  SketchController,
   section,
+  button,
   row,
   radio,
   checkbox,
-  slider,
   select,
   option,
-  stat,
-  button,
+  slider,
   divider,
-} from "../common.ts";
+  stat,
+  SelectDesc,
+  SliderDesc,
+} from "../controls.ts";
 
-type Shape = "square" | "circle" | "triangle";
+const Shapes = ["square", "circle", "triangle"] as const;
+type Shape = (typeof Shapes)[number];
 
 new SketchController(
   [
     section("Shape", [
+      button("randomize", "Randomize"),
       row([
         radio<Shape>("shape", "square", "Square", true),
         radio<Shape>("shape", "circle", "Circle"),
@@ -33,7 +37,7 @@ new SketchController(
       slider("size", 20, 200, 80, 1),
     ]),
     divider(),
-    section("Animation", [slider("speed", 0, 100, 50, 1), row([button("randomize", "Randomize")]), stat("info", "")]),
+    section("Animation", [slider("speed", 0, 100, 50, 1), stat("info", "")]),
   ],
   (p, controls) => {
     // State derived from controls
@@ -49,19 +53,30 @@ new SketchController(
     let pulsePhase = 0;
 
     // Wire up observers
-    controls.observe<Shape>("shape", v => (shape = v));
-    controls.observe<boolean>("outline", v => (showOutline = v));
-    controls.observe<boolean>("pulse", v => (pulseEnabled = v));
-    controls.observe<string>("color", v => (shapeColor = v));
-    controls.observe<number>("size", v => (shapeSize = v));
-    controls.observe<number>("speed", v => (rotationSpeed = v / 2500));
+    controls.subscribe<Shape>("shape", v => (shape = v));
+    controls.subscribe<boolean>("outline", v => (showOutline = v));
+    controls.subscribe<boolean>("pulse", v => (pulseEnabled = v));
+    controls.subscribe<string>("color", v => (shapeColor = v));
+    controls.subscribe<number>("size", v => (shapeSize = v));
+    controls.subscribe<number>("speed", v => (rotationSpeed = v / 2500));
 
     // Button click handler
-    controls.observe("randomize", () => {
-      const colors = ["#6366f1", "#10b981", "#f43f5e", "#f59e0b", "#06b6d4"];
+    controls.subscribe("randomize", () => {
+      const _randomShape = Shapes[Math.floor(Math.random() * Shapes.length)];
+      // set random shape !?
+
+      controls.set("pulse", Math.random() > 0.5);
+      controls.set("outline", Math.random() > 0.5);
+
+      const colors = controls.about<SelectDesc>("color")!.options;
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
-      controls.set("color", randomColor);
-      controls.set("size", Math.floor(Math.random() * 180) + 20);
+      controls.set("color", randomColor.value);
+
+      const size = controls.about<SliderDesc>("size")!;
+      controls.set("size", p.random(size.min, size.max).toFixed());
+
+      const speed = controls.about<SliderDesc>("speed")!;
+      controls.set("speed", p.random(speed.min, speed.max).toFixed());
     });
 
     p.draw = () => {
