@@ -122,5 +122,5 @@ new SketchController(
 
       p.pop();
     };
-  }
+  },
 ).init();

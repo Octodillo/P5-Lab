@@ -1,29 +1,18 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
-import { serveDir } from "https://deno.land/std@0.208.0/http/file_server.ts";
+import { serveDir, serveFile } from "https://deno.land/std@0.208.0/http/file_server.ts";
 import { transpile } from "jsr:@deno/emit@0.46.0";
+import { SketchIndex, SketchMeta } from "./src/common.ts";
 
 const PORT = 8000;
-const mode: "dev" | "live" = "dev";
 
-interface SketchMeta {
-  name: string;
-  description?: string;
-  hidden?: boolean;
-}
+const shrug = new Response("Not found", { status: 404 });
+const squint = new Response("Access denied", { status: 403 });
+const slapAria = new Response("Transpilation failed", { status: 500 });
 
-type SketchIndex = Record<string, SketchMeta>;
-
-const loadIndex = async (): Promise<SketchIndex> => {
-  try {
-    const content = await Deno.readTextFile("./sketches/index.json");
-    return JSON.parse(content);
-  } catch {
-    return {};
-  }
-};
+type RawSketchIndex = Record<string, Omit<SketchMeta, "name"> & { hidden?: boolean }>;
 
 const wsClients = new Set<WebSocket>();
-const watcher = Deno.watchFs(["./sketches", "./static"]);
+const watcher = Deno.watchFs(["."]);
 (async () => {
   for await (const event of watcher) {
     if (event.kind === "modify" || event.kind === "create") {
@@ -45,43 +34,10 @@ const jsonResponse = (object: {}) =>
     headers: { "content-type": "application/json" },
   });
 
-const getStatic = async (req: Request) => {
-  const response = await serveDir(req, {
-    fsRoot: "static",
-    urlRoot: "static",
-  });
-  // Add cache control for development
-  if (mode === "dev") response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
-  return response;
-};
-
-const homepage = async () => {
-  try {
-    const indexContent = await Deno.readTextFile("./static/index.html");
-    return new Response(indexContent, {
-      headers: {
-        "content-type": "text/html; charset=utf-8",
-        "x-content-type-options": "nosniff",
-        "x-frame-options": "SAMEORIGIN",
-      },
-    });
-  } catch {
-    return new Response("Index page not found", { status: 404 });
-  }
-};
-
-const sketches = async () => {
-  const index = await loadIndex();
-  return Object.entries(index)
-    .filter(([_, meta]) => !meta.hidden)
-    .map(([id, meta]) => ({ id, ...meta }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-};
-
 const src = async (path: string[]) => {
   if (path.length === 0 || !path.toReversed()[0].endsWith(".ts")) return squint;
 
-  path.unshift(Deno.cwd(), "sketches");
+  path.unshift(Deno.cwd(), "src");
   const fullPath = await Deno.realPath(path.join("/"));
   if (!fullPath) return shrug;
   const url = new URL(`file://${fullPath}`);
@@ -115,13 +71,6 @@ const src = async (path: string[]) => {
   }
 };
 
-const shrug = new Response("Not found", { status: 404 });
-const squint = new Response("Access denied", { status: 403 });
-const slapAria = new Response("Transpilation failed", { status: 500 });
-const reference = jsonResponse({
-  "/": "This API Reference",
-});
-
 const ws = (req: Request) => {
   if (req.headers.get("upgrade") !== "websocket") return shrug;
   const { socket, response } = Deno.upgradeWebSocket(req);
@@ -133,42 +82,37 @@ const ws = (req: Request) => {
   return Promise.resolve(response);
 };
 
-const api = async (path: string[]) => {
-  switch (path.shift()) {
-    case undefined:
-    case "ref":
-      return reference;
-    case "sketches":
-      return jsonResponse(await sketches());
-    case "src":
-      return src(path);
-    default:
-      return shrug;
-  }
+const staticHeaders = {
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "SAMEORIGIN",
+  "Cache-Control": "no-cache, no-store, must-revalidate",
 };
 
-const handler = (req: Request) => {
-  const path = new URL(req.url).pathname;
-  const parts = path.slice(1).split("/");
-  if (parts.includes(".") || parts.includes("..")) return squint;
-
-  switch (parts.shift()) {
-    case "":
-    case "index.html":
-      return homepage();
-    case "static":
-      return getStatic(req);
-    case "ws":
-      return ws(req);
-    case "api":
-      return api(parts);
-    default:
-      return shrug;
-  }
-};
-
-console.log(`🎨 Server at http://localhost:${PORT}`);
 console.log(`📁 /api/src/ → ./sketches/ (TypeScript transpiled on-the-fly)`);
 console.log(`🔄 Live reload enabled`);
 
-serve(handler, { port: PORT });
+const server = Deno.serve({ port: PORT }, (req: Request) => {
+  const path = new URL(req.url).pathname;
+  console.log(`🍽️\t${path}`);
+  const parts = path.slice(1).split("/");
+  if (parts.includes("..")) return squint;
+
+  switch (parts.shift()) {
+    case "ws":
+      return ws(req);
+    case "src":
+      return src(parts);
+    case "":
+      return serveFile(req, "./static/index.html");
+    default:
+      return serveDir(req, {
+        fsRoot: "static",
+        urlRoot: "",
+        headers: ["Cache-Control: no-cache, no-store, must-revalidate"],
+      });
+  }
+});
+
+console.log("🎨 Server at ${server.addr}");
+console.log("🏳️‍⚧️ Transpiling TypeScript on-the-fly");
+console.log(`🔄 Live reload enabled`);

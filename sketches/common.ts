@@ -3,7 +3,7 @@
  */
 
 // Re-export framework
-export { SketchController, P5MouseEvents, GlobalControls } from "./lib.ts";
+export { SketchController, P5MouseEvents } from "./lib.ts";
 
 // Re-export legacy controls API types for backward compatibility
 export {

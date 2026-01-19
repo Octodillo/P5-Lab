@@ -1,0 +1,75 @@
+{
+  "Animated Circles": {
+    "entry": {
+      "dir": "animated-circles",
+      "module": "mod.ts"
+    },
+    "icon": "icons/animated-circles.svg",
+    "description": "Simple animated circles demo",
+    "hidden": true
+  },
+  "Boids": {
+    "entry": {
+      "dir": "boids",
+      "module": "mod.ts"
+    },
+    "description": "Flocking simulation with emergent behavior"
+  },
+  "Cell Universe": {
+    "entry": {
+      "dir": "cell-universe",
+      "module": "mod.ts"
+    },
+    "description": "Cellular automata exploration"
+  },
+  "Controls Demo": {
+    "entry": {
+      "dir": "demo-controls-v2",
+      "module": "mod.ts"
+    },
+    "description": "Showcase of the declarative controls API",
+    "feature": true
+  },
+  "Euclidean Constructions": {
+    "entry": {
+      "dir": "euclidean-construction",
+      "module": "mod.ts"
+    },
+    "description": "Compass and straightedge geometric constructions"
+  },
+  "Newtonian Gravity": {
+    "entry": {
+      "dir": "gravity-newton",
+      "module": "mod.ts"
+    },
+    "description": "Classical gravitational simulation"
+  },
+  "General Relativity": {
+    "entry": {
+      "dir": "gravity-relativity",
+      "module": "mod.ts"
+    },
+    "description": "Spacetime curvature visualization"
+  },
+  "Game of Life": {
+    "entry": {
+      "dir": "life-v2",
+      "module": "mod.ts"
+    },
+    "description": "Conway's Game of Life with multi-rule support"
+  },
+  "Particle System": {
+    "entry": {
+      "dir": "particle-system",
+      "module": "mod.ts"
+    },
+    "description": "Interactive particle effects"
+  },
+  "Sorting Visualizer": {
+    "entry": {
+      "dir": "sorting-vis",
+      "module": "mod.ts"
+    },
+    "description": "Sorting visualizer"
+  }
+}

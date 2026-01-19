@@ -1,0 +1,517 @@
+// @ts-check
+/**
+ * @fileoverview Single-page app for p5.js playground with three-column layout.
+ * Manages sketch lifecycle, global controls, and UI state.
+ */
+
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+/**
+ * @typedef {Object} SketchMeta
+ * @property {string} name - Unique sketch identifier
+ * @property {string} [description] - Optional description for tooltip
+ * @property {boolean} [feature] - Whether this is a featured sketch
+ * @property {string} [icon] - Icon filename (without extension)
+ * @property {Object} entry - Entry point information
+ * @property {string} entry.dir - Directory name
+ * @property {string} entry.module - Module filename
+ */
+
+/**
+ * @typedef {Object} SketchError
+ * @property {string} sketchName - Name of the sketch that failed
+ * @property {string} error - Error message
+ */
+
+/**
+ * @typedef {Object} P5Instance
+ * @property {function(): void} remove - Remove the p5 instance
+ */
+
+/**
+ * Extend window with custom properties
+ * @typedef {Window & {
+ *   __p5_instance__: P5Instance | null,
+ *   __sketch_error__: SketchError | null,
+ *   __controls_ready__: boolean,
+ *   __resize_observer__: ResizeObserver | null
+ * }} ExtendedWindow
+ */
+
+/** @type {ExtendedWindow} */
+// @ts-ignore - Custom window properties
+const win = window;
+
+// ============================================================================
+// Global State
+// ============================================================================
+
+/**
+ * Application state manager
+ */
+class AppState {
+  constructor() {
+    /** @type {string | null} */
+    this.currentSketch = null;
+    /** @type {boolean} */
+    this.isLoadingSketch = false;
+    /** @type {boolean} */
+    this.globalControlsInitialized = false;
+    /** @type {Map<string, SketchMeta>} */
+    this.sketchesMap = new Map();
+  }
+
+  /**
+   * @param {string | null} name
+   */
+  setCurrentSketch(name) {
+    this.currentSketch = name;
+  }
+
+  /**
+   * @param {string} name
+   * @returns {boolean}
+   */
+  isCurrentSketch(name) {
+    return this.currentSketch === name;
+  }
+
+  /**
+   * @param {boolean} loading
+   */
+  setLoading(loading) {
+    this.isLoadingSketch = loading;
+  }
+
+  /**
+   * @returns {boolean}
+   */
+  isLoading() {
+    return this.isLoadingSketch;
+  }
+
+  setGlobalControlsInitialized() {
+    this.globalControlsInitialized = true;
+  }
+
+  /**
+   * @returns {boolean}
+   */
+  isGlobalControlsInitialized() {
+    return this.globalControlsInitialized;
+  }
+
+  /**
+   * Store sketch metadata for later lookup
+   * @param {SketchMeta[]} sketches
+   */
+  setSketches(sketches) {
+    this.sketchesMap.clear();
+    sketches.forEach(sketch => {
+      this.sketchesMap.set(sketch.name, sketch);
+    });
+  }
+
+  /**
+   * Get sketch metadata by name
+   * @param {string} name
+   * @returns {SketchMeta | undefined}
+   */
+  getSketchMeta(name) {
+    return this.sketchesMap.get(name);
+  }
+}
+
+const appState = new AppState();
+
+// Global window properties used by sketches
+win.__p5_instance__ = null;
+win.__sketch_error__ = null;
+win.__controls_ready__ = false;
+win.__resize_observer__ = null;
+
+// ============================================================================
+// DOM Utilities
+// ============================================================================
+
+/**
+ * Safe querySelector that returns null if not found
+ * @param {string} selector
+ * @returns {HTMLElement | null}
+ */
+function getElement(selector) {
+  return document.querySelector(selector);
+}
+
+/**
+ * Get element by ID with type safety
+ * @param {string} id
+ * @returns {HTMLElement | null}
+ */
+function getElementById(id) {
+  return document.getElementById(id);
+}
+
+/**
+ * Update active state in sketch list
+ * @param {string} activeSketchName
+ */
+function updateSketchListActiveState(activeSketchName) {
+  document.querySelectorAll(".sketch-item").forEach(item => {
+    if (!(item instanceof HTMLElement)) return;
+    const sketchId = item.dataset.sketchId;
+    if (sketchId === activeSketchName) {
+      item.classList.add("active");
+    } else {
+      item.classList.remove("active");
+    }
+  });
+}
+
+// ============================================================================
+// Cleanup Functions
+// ============================================================================
+
+/**
+ * Remove previous p5 instance if it exists
+ */
+function cleanupP5Instance() {
+  if (win.__p5_instance__) {
+    try {
+      win.__p5_instance__.remove();
+      win.__p5_instance__ = null;
+    } catch (error) {
+      console.warn("Error removing previous p5 instance:", error);
+    }
+  }
+}
+
+/**
+ * Disconnect resize observer if it exists
+ */
+function cleanupResizeObserver() {
+  if (win.__resize_observer__) {
+    try {
+      win.__resize_observer__.disconnect();
+      win.__resize_observer__ = null;
+    } catch (error) {
+      console.warn("Error disconnecting resize observer:", error);
+    }
+  }
+}
+
+/**
+ * Clear all sketch-related state
+ */
+function cleanupSketch() {
+  cleanupP5Instance();
+  cleanupResizeObserver();
+  win.__controls_ready__ = false;
+}
+
+// ============================================================================
+// Controls Management
+// ============================================================================
+
+/**
+ * Move sketch controls to the sidebar
+ * @param {HTMLElement} controlsContainer
+ */
+function moveControlsToSidebar(controlsContainer) {
+  const controls = getElement(".sketch-controls:not(.sketch-controls--global)");
+
+  if (controls) {
+    controlsContainer.innerHTML = "";
+    controls.remove();
+    controls.style.display = "flex";
+    controlsContainer.appendChild(controls);
+  } else if (win.__controls_ready__ !== undefined) {
+    // Sketch loaded but has no controls
+    controlsContainer.innerHTML = '<div class="controls-empty">No controls for this sketch</div>';
+  }
+}
+
+/**
+ * Wait for controls to be ready and move them to sidebar
+ * @param {HTMLElement} controlsContainer
+ * @param {number} maxAttempts
+ */
+function setupControlsWithRetry(controlsContainer, maxAttempts = 3) {
+  let attempts = 0;
+
+  const tryMoveControls = () => {
+    if (win.__controls_ready__) {
+      moveControlsToSidebar(controlsContainer);
+    } else if (attempts < maxAttempts) {
+      attempts++;
+      setTimeout(tryMoveControls, 100);
+    } else {
+      // Timeout - try one last time
+      moveControlsToSidebar(controlsContainer);
+    }
+  };
+
+  tryMoveControls();
+}
+
+// ============================================================================
+// Global Controls
+// ============================================================================
+
+/**
+ * Initialize global controls (only once)
+ */
+async function initGlobalControls() {
+  if (appState.isGlobalControlsInitialized()) {
+    return;
+  }
+
+  try {
+    const { GlobalControls } = await import("/api/src/common.ts");
+    GlobalControls.getInstance();
+    appState.setGlobalControlsInitialized();
+  } catch (error) {
+    console.error("Failed to initialize global controls:", error);
+  }
+}
+
+// ============================================================================
+// Sketch List
+// ============================================================================
+
+/**
+ * Create a sketch list item element
+ * @param {SketchMeta} sketch
+ * @returns {HTMLElement}
+ */
+function createSketchItem(sketch) {
+  const item = document.createElement("div");
+  item.className = "sketch-item";
+  item.dataset.sketchId = sketch.name;
+
+  if (sketch.description) {
+    item.title = sketch.description;
+  }
+
+  // Icon
+  const icon = document.createElement("img");
+  icon.className = "sketch-icon";
+  icon.src = `/static/icons/${sketch.icon ?? "default"}.svg`;
+  icon.alt = "";
+
+  // Label
+  const label = document.createElement("span");
+  label.className = "sketch-label";
+  label.textContent = sketch.name;
+
+  item.appendChild(icon);
+  item.appendChild(label);
+  item.addEventListener("click", () => loadSketch(sketch.name));
+
+  return item;
+}
+
+/**
+ * Load and display sketches in the list
+ */
+async function loadSketchList() {
+  const container = getElementById("sketches-container");
+  if (!container) {
+    console.error("Sketches container not found");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/sketches");
+    /** @type {SketchMeta[]} */
+    const sketches = await response.json();
+
+    if (sketches.length === 0) {
+      container.innerHTML = '<div class="no-sketches">No sketches found</div>';
+      return;
+    }
+
+    // Store sketch metadata for later use
+    appState.setSketches(sketches);
+
+    container.innerHTML = "";
+    sketches.forEach(sketch => {
+      container.appendChild(createSketchItem(sketch));
+    });
+  } catch (error) {
+    console.error("Failed to load sketches:", error);
+    container.innerHTML = '<div class="no-sketches">Error loading sketches</div>';
+  }
+}
+
+// ============================================================================
+// Sketch Loading
+// ============================================================================
+
+/**
+ * Load a sketch module with cache busting
+ * @param {string} modulePath - Path to the sketch module
+ * @returns {Promise<any>}
+ */
+async function importSketchModule(modulePath) {
+  const cacheBuster = Date.now();
+  return await import(`${modulePath}?t=${cacheBuster}`);
+}
+
+/**
+ * Build the module path for a sketch
+ * @param {SketchMeta} meta - Sketch metadata
+ * @returns {string} - Full API path to the sketch module
+ */
+function buildSketchModulePath(meta) {
+  return `/api/src/${meta.entry.dir}/${meta.entry.module}`;
+}
+
+/**
+ * Prepare UI for sketch loading
+ * @param {string} sketchName
+ */
+function prepareUIForSketch(sketchName) {
+  updateSketchListActiveState(sketchName);
+
+  const sketchContainer = getElementById("sketch-container");
+  const controlsContainer = getElementById("controls-container");
+
+  if (sketchContainer) {
+    sketchContainer.innerHTML = "";
+  }
+
+  if (controlsContainer) {
+    controlsContainer.innerHTML = '<div class="loading">Loading controls...</div>';
+  }
+}
+
+/**
+ * Load and display the fallback sketch on error
+ * @param {string} sketchName - Name of the sketch that failed
+ * @param {unknown} error - The error that occurred
+ */
+async function loadFallbackSketch(sketchName, error) {
+  console.error(`Failed to load sketch "${sketchName}":`, error);
+
+  // Set error info for fallback sketch to display
+  win.__sketch_error__ = {
+    sketchName,
+    error: error instanceof Error ? error.message : String(error),
+  };
+
+  try {
+    await importSketchModule("/api/src/fallback.ts");
+
+    const controlsContainer = getElementById("controls-container");
+    if (controlsContainer) {
+      setTimeout(() => moveControlsToSidebar(controlsContainer), 200);
+    }
+  } catch (fallbackError) {
+    console.error("Failed to load fallback sketch:", fallbackError);
+    const controlsContainer = getElementById("controls-container");
+    if (controlsContainer) {
+      controlsContainer.innerHTML = '<div class="controls-empty">Error loading sketch</div>';
+    }
+  }
+}
+
+/**
+ * Load and run a specific sketch
+ * @param {string} sketchName - Name of the sketch to load
+ */
+async function loadSketch(sketchName) {
+  // Prevent concurrent loads
+  if (appState.isLoading()) {
+    console.log("Sketch already loading, ignoring request");
+    return;
+  }
+
+  // Prevent reloading the same sketch
+  if (appState.isCurrentSketch(sketchName) && win.__p5_instance__) {
+    console.log("Sketch already loaded");
+    return;
+  }
+
+  // Get sketch metadata from cache
+  const meta = appState.getSketchMeta(sketchName);
+  if (!meta) {
+    console.error(`Sketch metadata not found for "${sketchName}"`);
+    return;
+  }
+
+  appState.setLoading(true);
+
+  try {
+    cleanupSketch();
+    prepareUIForSketch(sketchName);
+
+    appState.setCurrentSketch(sketchName);
+
+    // Build the correct module path from metadata
+    const modulePath = buildSketchModulePath(meta);
+    await importSketchModule(modulePath);
+
+    // Move controls to sidebar
+    const controlsContainer = getElementById("controls-container");
+    if (controlsContainer) {
+      setupControlsWithRetry(controlsContainer);
+    }
+  } catch (error) {
+    await loadFallbackSketch(sketchName, error);
+  } finally {
+    appState.setLoading(false);
+  }
+}
+
+/**
+ * Load the welcome sketch (hello.ts)
+ */
+async function loadWelcomeSketch() {
+  try {
+    await importSketchModule("/api/src/hello.ts");
+
+    const controlsContainer = getElementById("controls-container");
+    if (controlsContainer) {
+      setTimeout(() => moveControlsToSidebar(controlsContainer), 200);
+    }
+  } catch (error) {
+    console.error("Failed to load welcome sketch:", error);
+  }
+}
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+/**
+ * Initialize the application
+ */
+async function initializeApp() {
+  await initGlobalControls();
+  await loadSketchList();
+  await loadWelcomeSketch();
+}
+
+/**
+ * Handle live reload by reloading current sketch
+ */
+function handleLiveReload() {
+  const currentSketch = appState.currentSketch;
+  if (currentSketch) {
+    setTimeout(() => {
+      if (appState.currentSketch === currentSketch) {
+        loadSketch(currentSketch);
+      }
+    }, 500);
+  }
+}
+
+// ============================================================================
+// Event Listeners
+// ============================================================================
+
+document.addEventListener("DOMContentLoaded", initializeApp);
+globalThis.addEventListener("load", handleLiveReload);

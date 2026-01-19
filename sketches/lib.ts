@@ -8,9 +8,6 @@ type AnyWindow = Window & typeof globalThis & { [key: string]: any };
 /**
  * Unified framework for creating sketches with controls
  *
- * Supports two signatures:
- * 1. Declarative: new SketchController(descriptors[], (p, controls) => { ... })
- * 2. Legacy fluent: new SketchController((p, controlsBuilder) => { ... })
  */
 export class SketchController {
   private p5Instance: p5 | null = null;
@@ -18,25 +15,10 @@ export class SketchController {
   private resizeObserver: ResizeObserver | null = null;
   private readonly descriptors: ControlDesc[] | null;
   private readonly sketchFn: ((p: p5, controls: Controls) => void) | ((p: p5, controls: ControlsBuilder) => void);
-  private readonly isLegacy: boolean;
 
-  constructor(descriptors: ControlDesc[], sketchFn: (p: p5, controls: Controls) => void);
-  constructor(sketchFn: (p: p5, controls: ControlsBuilder) => void);
-  constructor(
-    descriptorsOrSketchFn: ControlDesc[] | ((p: p5, controls: ControlsBuilder) => void),
-    sketchFn?: (p: p5, controls: Controls) => void
-  ) {
-    if (typeof descriptorsOrSketchFn === "function") {
-      // Legacy signature: just a function
-      this.isLegacy = true;
-      this.descriptors = null;
-      this.sketchFn = descriptorsOrSketchFn;
-    } else {
-      // Declarative signature: descriptors + function
-      this.isLegacy = false;
-      this.descriptors = descriptorsOrSketchFn;
-      this.sketchFn = sketchFn!;
-    }
+  constructor(descriptors: ControlDesc[], sketchFn?: (p: p5, controls: Controls) => void) {
+    this.descriptors = descriptors;
+    this.sketchFn = sketchFn!;
   }
 
   /**
@@ -55,22 +37,14 @@ export class SketchController {
       this.resizeObserver.observe(container);
 
       let panel: HTMLElement;
+      // Declarative API path
+      panel = document.createElement("div");
+      panel.className = "sketch-controls";
 
-      if (this.isLegacy) {
-        // Legacy imperative API path
-        const controlsBuilder = new ControlsBuilder(p);
-        panel = controlsBuilder.panel;
-        (this.sketchFn as (p: p5, controls: ControlsBuilder) => void)(p, controlsBuilder);
-      } else {
-        // Declarative API path
-        panel = document.createElement("div");
-        panel.className = "sketch-controls";
+      const renderer = new ControlsRenderer(p);
+      const controls = renderer.render(this.descriptors!, panel);
 
-        const renderer = new ControlsRenderer(p);
-        const controls = renderer.render(this.descriptors!, panel);
-
-        (this.sketchFn as (p: p5, controls: Controls) => void)(p, controls);
-      }
+      (this.sketchFn as (p: p5, controls: Controls) => void)(p, controls);
 
       this.controlsPanel = panel;
 
@@ -83,9 +57,9 @@ export class SketchController {
     (window as AnyWindow).__p5_instance__ = this.p5Instance;
     (window as AnyWindow).__controls_ready__ = true;
 
-    // Wire into global controls
-    const globalControls = GlobalControls.getInstance();
-    globalControls.wire(this.p5Instance);
+    // // Wire into global controls
+    // const globalControls = GlobalControls.getInstance();
+    // globalControls.wire(this.p5Instance);
 
     return this.p5Instance;
   }
@@ -143,257 +117,257 @@ export class P5MouseEvents extends EventEmitter<{
 /**
  * Global controls that persist across sketch changes
  */
-export class GlobalControls {
-  private static instance: GlobalControls | null = null;
-  private panel: HTMLElement | null = null;
-  private _isStopped = false;
-  private targetFPS = 60;
-  private playbackButtons: Map<string, HTMLLabelElement> = new Map();
-  private stepButton: HTMLButtonElement | null = null;
-  private fpsInput: HTMLInputElement | null = null;
-  private fpsDisplay: HTMLElement | null = null;
-  private currentP5Instance: p5 | null = null;
+// export class GlobalControls {
+//   private static instance: GlobalControls | null = null;
+//   private panel: HTMLElement | null = null;
+//   private _isStopped = false;
+//   private targetFPS = 60;
+//   private playbackButtons: Map<string, HTMLLabelElement> = new Map();
+//   private stepButton: HTMLButtonElement | null = null;
+//   private fpsInput: HTMLInputElement | null = null;
+//   private fpsDisplay: HTMLElement | null = null;
+//   private currentP5Instance: p5 | null = null;
 
-  private constructor() {
-    this.createUI();
-  }
+//   private constructor() {
+//     this.createUI();
+//   }
 
-  static getInstance(): GlobalControls {
-    if (!GlobalControls.instance) {
-      GlobalControls.instance = new GlobalControls();
-    }
-    return GlobalControls.instance;
-  }
+//   static getInstance(): GlobalControls {
+//     if (!GlobalControls.instance) {
+//       GlobalControls.instance = new GlobalControls();
+//     }
+//     return GlobalControls.instance;
+//   }
 
-  private createUI(): void {
-    const container = document.getElementById("global-controls-container");
-    if (!container) {
-      console.error("Global controls container not found");
-      return;
-    }
+//   private createUI(): void {
+//     const container = document.getElementById("global-controls-container");
+//     if (!container) {
+//       console.error("Global controls container not found");
+//       return;
+//     }
 
-    // Wrap in sketch-controls for styling, then global-controls for overrides
-    // Use sketch-controls--global to distinguish from sketch-specific controls
-    const wrapper = document.createElement("div");
-    wrapper.className = "sketch-controls sketch-controls--global";
+//     // Wrap in sketch-controls for styling, then global-controls for overrides
+//     // Use sketch-controls--global to distinguish from sketch-specific controls
+//     const wrapper = document.createElement("div");
+//     wrapper.className = "sketch-controls sketch-controls--global";
 
-    this.panel = document.createElement("div");
-    this.panel.className = "global-controls";
+//     this.panel = document.createElement("div");
+//     this.panel.className = "global-controls";
 
-    // Playback controls row: Reset | Stop | Step | Play
-    const playbackRow = document.createElement("div");
-    playbackRow.className = "sketch-controls__row";
+//     // Playback controls row: Reset | Stop | Step | Play
+//     const playbackRow = document.createElement("div");
+//     playbackRow.className = "sketch-controls__row";
 
-    // Reset button (not part of radio group - it's an action)
-    const resetButton = document.createElement("button");
-    resetButton.className = "sketch-controls__button";
-    resetButton.textContent = "Reset";
-    resetButton.addEventListener("click", () => this.resetSketch());
-    playbackRow.appendChild(resetButton);
+//     // Reset button (not part of radio group - it's an action)
+//     const resetButton = document.createElement("button");
+//     resetButton.className = "sketch-controls__button";
+//     resetButton.textContent = "Reset";
+//     resetButton.addEventListener("click", () => this.resetSketch());
+//     playbackRow.appendChild(resetButton);
 
-    // Stop radio button
-    this.createPlaybackRadio(playbackRow, "stop", "Stop", false, () => this.stop());
+//     // Stop radio button
+//     this.createPlaybackRadio(playbackRow, "stop", "Stop", false, () => this.stop());
 
-    // Step button (only works when stopped)
-    this.stepButton = document.createElement("button");
-    this.stepButton.className = "sketch-controls__button";
-    this.stepButton.textContent = "Step";
-    this.stepButton.disabled = true;
-    this.stepButton.addEventListener("click", () => this.step());
-    playbackRow.appendChild(this.stepButton);
+//     // Step button (only works when stopped)
+//     this.stepButton = document.createElement("button");
+//     this.stepButton.className = "sketch-controls__button";
+//     this.stepButton.textContent = "Step";
+//     this.stepButton.disabled = true;
+//     this.stepButton.addEventListener("click", () => this.step());
+//     playbackRow.appendChild(this.stepButton);
 
-    // Play radio button
-    this.createPlaybackRadio(playbackRow, "play", "Play", true, () => this.play());
+//     // Play radio button
+//     this.createPlaybackRadio(playbackRow, "play", "Play", true, () => this.play());
 
-    this.panel.appendChild(playbackRow);
+//     this.panel.appendChild(playbackRow);
 
-    // FPS control row
-    const fpsRow = document.createElement("div");
-    fpsRow.className = "sketch-controls__row";
+//     // FPS control row
+//     const fpsRow = document.createElement("div");
+//     fpsRow.className = "sketch-controls__row";
 
-    const fpsLabelSpan = document.createElement("span");
-    fpsLabelSpan.className = "sketch-controls__slider-label";
-    fpsLabelSpan.textContent = "Target FPS";
-    fpsRow.appendChild(fpsLabelSpan);
+//     const fpsLabelSpan = document.createElement("span");
+//     fpsLabelSpan.className = "sketch-controls__slider-label";
+//     fpsLabelSpan.textContent = "Target FPS";
+//     fpsRow.appendChild(fpsLabelSpan);
 
-    this.fpsInput = document.createElement("input");
-    this.fpsInput.type = "number";
-    this.fpsInput.min = "1";
-    this.fpsInput.max = "1000";
-    this.fpsInput.value = String(this.targetFPS);
-    this.fpsInput.className = "sketch-controls__input";
-    this.fpsInput.addEventListener("input", e => {
-      const value = parseInt((e.target as HTMLInputElement).value);
-      if (!isNaN(value) && value > 0 && value <= 120) {
-        this.setFPS(value);
-      }
-    });
-    fpsRow.appendChild(this.fpsInput);
+//     this.fpsInput = document.createElement("input");
+//     this.fpsInput.type = "number";
+//     this.fpsInput.min = "1";
+//     this.fpsInput.max = "1000";
+//     this.fpsInput.value = String(this.targetFPS);
+//     this.fpsInput.className = "sketch-controls__input";
+//     this.fpsInput.addEventListener("input", e => {
+//       const value = parseInt((e.target as HTMLInputElement).value);
+//       if (!isNaN(value) && value > 0 && value <= 120) {
+//         this.setFPS(value);
+//       }
+//     });
+//     fpsRow.appendChild(this.fpsInput);
 
-    this.panel.appendChild(fpsRow);
+//     this.panel.appendChild(fpsRow);
 
-    // FPS display (stat)
-    this.fpsDisplay = document.createElement("div");
-    this.fpsDisplay.className = "sketch-controls__stat";
-    this.fpsDisplay.innerHTML = "Current: --";
-    this.panel.appendChild(this.fpsDisplay);
+//     // FPS display (stat)
+//     this.fpsDisplay = document.createElement("div");
+//     this.fpsDisplay.className = "sketch-controls__stat";
+//     this.fpsDisplay.innerHTML = "Current: --";
+//     this.panel.appendChild(this.fpsDisplay);
 
-    wrapper.appendChild(this.panel);
-    container.appendChild(wrapper);
+//     wrapper.appendChild(this.panel);
+//     container.appendChild(wrapper);
 
-    // Update FPS display every 500ms
-    setInterval(() => this.updateFPSDisplay(), 500);
-  }
+//     // Update FPS display every 500ms
+//     setInterval(() => this.updateFPSDisplay(), 500);
+//   }
 
-  /**
-   * Create a radio button for the playback controls
-   */
-  private createPlaybackRadio(
-    container: HTMLElement,
-    value: string,
-    labelText: string,
-    defaultChecked: boolean,
-    onChange: () => void
-  ): void {
-    const groupId = "global-playback";
+//   /**
+//    * Create a radio button for the playback controls
+//    */
+//   private createPlaybackRadio(
+//     container: HTMLElement,
+//     value: string,
+//     labelText: string,
+//     defaultChecked: boolean,
+//     onChange: () => void,
+//   ): void {
+//     const groupId = "global-playback";
 
-    const label = document.createElement("label");
-    label.dataset.radioGroup = groupId;
+//     const label = document.createElement("label");
+//     label.dataset.radioGroup = groupId;
 
-    const input = document.createElement("input");
-    input.type = "radio";
-    input.name = groupId;
-    input.value = value;
-    input.checked = defaultChecked;
-    input.addEventListener("change", () => {
-      if (input.checked) onChange();
-    });
+//     const input = document.createElement("input");
+//     input.type = "radio";
+//     input.name = groupId;
+//     input.value = value;
+//     input.checked = defaultChecked;
+//     input.addEventListener("change", () => {
+//       if (input.checked) onChange();
+//     });
 
-    const span = document.createElement("span");
-    span.textContent = labelText;
+//     const span = document.createElement("span");
+//     span.textContent = labelText;
 
-    label.appendChild(input);
-    label.appendChild(span);
-    container.appendChild(label);
+//     label.appendChild(input);
+//     label.appendChild(span);
+//     container.appendChild(label);
 
-    // Store reference for programmatic access
-    this.playbackButtons.set(value, label);
+//     // Store reference for programmatic access
+//     this.playbackButtons.set(value, label);
 
-    // Add hover handlers for group indication
-    label.addEventListener("mouseenter", () => {
-      const siblings = document.querySelectorAll(`label[data-radio-group="${groupId}"]`);
-      siblings.forEach(sibling => {
-        if (sibling !== label) {
-          sibling.classList.add("radio-group-sibling-hover");
-        }
-      });
-    });
+//     // Add hover handlers for group indication
+//     label.addEventListener("mouseenter", () => {
+//       const siblings = document.querySelectorAll(`label[data-radio-group="${groupId}"]`);
+//       siblings.forEach(sibling => {
+//         if (sibling !== label) {
+//           sibling.classList.add("radio-group-sibling-hover");
+//         }
+//       });
+//     });
 
-    label.addEventListener("mouseleave", () => {
-      const siblings = document.querySelectorAll(`label[data-radio-group="${groupId}"]`);
-      siblings.forEach(sibling => {
-        sibling.classList.remove("radio-group-sibling-hover");
-      });
-    });
-  }
+//     label.addEventListener("mouseleave", () => {
+//       const siblings = document.querySelectorAll(`label[data-radio-group="${groupId}"]`);
+//       siblings.forEach(sibling => {
+//         sibling.classList.remove("radio-group-sibling-hover");
+//       });
+//     });
+//   }
 
-  /**
-   * Wire the global controls into a p5 instance
-   */
-  wire(p5Instance: p5): void {
-    this.currentP5Instance = p5Instance;
+//   /**
+//    * Wire the global controls into a p5 instance
+//    */
+//   wire(p5Instance: p5): void {
+//     this.currentP5Instance = p5Instance;
 
-    // Apply current settings
-    if (this.targetFPS) {
-      p5Instance.frameRate(this.targetFPS);
-    }
+//     // Apply current settings
+//     if (this.targetFPS) {
+//       p5Instance.frameRate(this.targetFPS);
+//     }
 
-    // If stopped, stop the new instance immediately
-    if (this._isStopped) {
-      p5Instance.noLoop();
-    }
-  }
+//     // If stopped, stop the new instance immediately
+//     if (this._isStopped) {
+//       p5Instance.noLoop();
+//     }
+//   }
 
-  /**
-   * Stop the sketch (pause)
-   */
-  private stop(): void {
-    if (!this.currentP5Instance) return;
+//   /**
+//    * Stop the sketch (pause)
+//    */
+//   private stop(): void {
+//     if (!this.currentP5Instance) return;
 
-    this._isStopped = true;
-    this.currentP5Instance.noLoop();
+//     this._isStopped = true;
+//     this.currentP5Instance.noLoop();
 
-    if (this.stepButton) {
-      this.stepButton.disabled = false;
-    }
-  }
+//     if (this.stepButton) {
+//       this.stepButton.disabled = false;
+//     }
+//   }
 
-  /**
-   * Step one frame forward (only when stopped)
-   */
-  private step(): void {
-    if (!this.currentP5Instance || !this._isStopped) return;
+//   /**
+//    * Step one frame forward (only when stopped)
+//    */
+//   private step(): void {
+//     if (!this.currentP5Instance || !this._isStopped) return;
 
-    this.currentP5Instance.redraw();
-  }
+//     this.currentP5Instance.redraw();
+//   }
 
-  /**
-   * Play the sketch (resume)
-   */
-  private play(): void {
-    if (!this.currentP5Instance) return;
+//   /**
+//    * Play the sketch (resume)
+//    */
+//   private play(): void {
+//     if (!this.currentP5Instance) return;
 
-    this._isStopped = false;
-    this.currentP5Instance.loop();
+//     this._isStopped = false;
+//     this.currentP5Instance.loop();
 
-    if (this.stepButton) {
-      this.stepButton.disabled = true;
-    }
-  }
+//     if (this.stepButton) {
+//       this.stepButton.disabled = true;
+//     }
+//   }
 
-  /**
-   * Reset the sketch by calling setup() again
-   */
-  private resetSketch(): void {
-    if (!this.currentP5Instance) return;
+//   /**
+//    * Reset the sketch by calling setup() again
+//    */
+//   private resetSketch(): void {
+//     if (!this.currentP5Instance) return;
 
-    // Call setup again if it exists
-    if (typeof this.currentP5Instance.setup === "function") {
-      this.currentP5Instance.setup();
-    }
-  }
+//     // Call setup again if it exists
+//     if (typeof this.currentP5Instance.setup === "function") {
+//       this.currentP5Instance.setup();
+//     }
+//   }
 
-  /**
-   * Set target FPS
-   */
-  private setFPS(fps: number): void {
-    this.targetFPS = fps;
-    if (this.currentP5Instance) {
-      this.currentP5Instance.frameRate(fps);
-    }
-  }
+//   /**
+//    * Set target FPS
+//    */
+//   private setFPS(fps: number): void {
+//     this.targetFPS = fps;
+//     if (this.currentP5Instance) {
+//       this.currentP5Instance.frameRate(fps);
+//     }
+//   }
 
-  /**
-   * Update FPS display
-   */
-  private updateFPSDisplay(): void {
-    if (this.fpsDisplay && this.currentP5Instance) {
-      const currentFPS = this.currentP5Instance.frameRate();
-      this.fpsDisplay.innerHTML = `Current: ${currentFPS.toFixed(1)} FPS`;
-    }
-  }
+//   /**
+//    * Update FPS display
+//    */
+//   private updateFPSDisplay(): void {
+//     if (this.fpsDisplay && this.currentP5Instance) {
+//       const currentFPS = this.currentP5Instance.frameRate();
+//       this.fpsDisplay.innerHTML = `Current: ${currentFPS.toFixed(1)} FPS`;
+//     }
+//   }
 
-  /**
-   * Get current stop state
-   */
-  getStopState(): boolean {
-    return this._isStopped;
-  }
+//   /**
+//    * Get current stop state
+//    */
+//   getStopState(): boolean {
+//     return this._isStopped;
+//   }
 
-  /**
-   * Get current target FPS
-   */
-  getTargetFPS(): number {
-    return this.targetFPS;
-  }
-}
+//   /**
+//    * Get current target FPS
+//    */
+//   getTargetFPS(): number {
+//     return this.targetFPS;
+//   }
+// }
