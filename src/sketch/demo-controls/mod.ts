@@ -1,15 +1,7 @@
-import {
-  SketchController,
-  ButtonControl,
-  SelectControl,
-  SliderControl,
-  CheckboxControl,
-  StatControl,
-  RowBuilder,
-  SectionBuilder,
-} from "../common.ts";
+// NOTE: This sketch uses the legacy imperative API
+import { initSketch } from "../../sketch.ts";
 
-new SketchController((p, controls) => {
+initSketch([], ({ p5: p, controls }) => {
   // State
   let bgColor = 30;
   let shapeColor = "#6366f1";
@@ -179,4 +171,4 @@ new SketchController((p, controls) => {
     p.text(customLabel, p.width / 2, 20);
     p.pop();
   };
-}).init();
+});

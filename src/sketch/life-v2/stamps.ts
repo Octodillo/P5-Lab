@@ -1,4 +1,4 @@
-import { number2 } from "../common.ts";
+import { number2 } from "../../common.ts";
 import { GOL, Rule } from "../life-v1/rules.ts";
 
 export interface Stamp {

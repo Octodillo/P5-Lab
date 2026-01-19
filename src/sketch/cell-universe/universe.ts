@@ -1,4 +1,4 @@
-import { Coordinate, TupleMap, Tuple } from "../common.ts";
+import { Coordinate, TupleMap, Tuple } from "../../common.ts";
 import Cell from "./cell.ts";
 
 export default class Universe<Dimensions extends number> extends TupleMap<Cell<Dimensions, string>, Dimensions> {

@@ -1,23 +1,23 @@
-import { SketchController } from "../common.ts";
+import { initSketch } from "../../sketch.ts";
 import {
-  section,
   button,
-  row,
-  radio,
   checkbox,
-  select,
-  option,
-  slider,
   divider,
-  stat,
+  option,
+  radio,
+  row,
+  section,
+  select,
   SelectDesc,
+  slider,
   SliderDesc,
-} from "../controls.ts";
+  stat,
+} from "../../controls.ts";
 
 const Shapes = ["square", "circle", "triangle"] as const;
 type Shape = (typeof Shapes)[number];
 
-new SketchController(
+initSketch(
   [
     section("Shape", [
       button("randomize", "Randomize"),
@@ -39,7 +39,7 @@ new SketchController(
     divider(),
     section("Animation", [slider("speed", 0, 100, 50, 1), stat("info", "")]),
   ],
-  (p, controls) => {
+  ({ p5, controls }) => {
     // State derived from controls
     let shape: Shape = "square";
     let showOutline = true;
@@ -73,14 +73,14 @@ new SketchController(
       controls.set("color", randomColor.value);
 
       const size = controls.about<SliderDesc>("size")!;
-      controls.set("size", p.random(size.min, size.max).toFixed());
+      controls.set("size", p5.random(size.min, size.max).toFixed());
 
       const speed = controls.about<SliderDesc>("speed")!;
-      controls.set("speed", p.random(speed.min, speed.max).toFixed());
+      controls.set("speed", p5.random(speed.min, speed.max).toFixed());
     });
 
-    p.draw = () => {
-      p.background(30);
+    p5.draw = () => {
+      p5.background(30);
 
       rotation += rotationSpeed;
       pulsePhase += 0.05;
@@ -93,34 +93,34 @@ new SketchController(
       controls.set("info", `${shape} | ${Math.round(currentSize)}px`);
 
       // Draw shape
-      p.push();
-      p.translate(p.width / 2, p.height / 2);
-      p.rotate(rotation);
+      p5.push();
+      p5.translate(p5.width / 2, p5.height / 2);
+      p5.rotate(rotation);
 
-      p.fill(shapeColor);
+      p5.fill(shapeColor);
       if (showOutline) {
-        p.stroke(255);
-        p.strokeWeight(2);
+        p5.stroke(255);
+        p5.strokeWeight(2);
       } else {
-        p.noStroke();
+        p5.noStroke();
       }
 
       switch (shape) {
         case "square":
-          p.rectMode(p.CENTER);
-          p.rect(0, 0, currentSize, currentSize);
+          p5.rectMode(p5.CENTER);
+          p5.rect(0, 0, currentSize, currentSize);
           break;
         case "circle":
-          p.ellipse(0, 0, currentSize, currentSize);
+          p5.ellipse(0, 0, currentSize, currentSize);
           break;
         case "triangle": {
           const h = (currentSize * Math.sqrt(3)) / 2;
-          p.triangle(0, -h / 2, -currentSize / 2, h / 2, currentSize / 2, h / 2);
+          p5.triangle(0, -h / 2, -currentSize / 2, h / 2, currentSize / 2, h / 2);
           break;
         }
       }
 
-      p.pop();
+      p5.pop();
     };
   },
-).init();
+);

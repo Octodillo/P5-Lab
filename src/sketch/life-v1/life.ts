@@ -1,13 +1,18 @@
 import p5 from "p5";
-import { P5MouseEvents, ControlsBuilder } from "../common.ts";
 import type { Rule } from "./rules.ts";
 import * as Rules from "./rules.ts";
 import { Stamp, Glider, SmallExploder, LightweightSpaceship, Tumbler, GosperGliderGun, LaserGun } from "./stamps.ts";
+import { Controls } from "../../controls.ts";
+import { P5MouseEvents } from "../../sketch.ts";
 
 type BrushType = "draw" | "erase" | "stamp";
 
 export class Cell {
-  constructor(readonly life: LifeModel, readonly position: p5.Vector, readonly rule: Rule) {
+  constructor(
+    readonly life: LifeModel,
+    readonly position: p5.Vector,
+    readonly rule: Rule,
+  ) {
     this.decayRate = rule.decay !== undefined ? 1 / (rule.decay + 1) : 1;
   }
 
@@ -66,41 +71,20 @@ export class LifeModel {
   private volatile = new Map<number, Set<number>>(); // x -> Set<y>
   private mouse: P5MouseEvents;
   private selectedRule: Rule = Rules.GOL;
-  private originalRule: Rule = Rules.GOL; // Track original rule for comparison
   private customRules: Rule[] = [];
-  private isEditingRule = false;
-  private currentRuleName = "";
-  private currentRuleBorn = "";
-  private currentRuleLive = "";
-  private currentRuleColor = "";
   private autoZoom = true;
   private lastDragPos?: p5.Vector;
   private brushType: BrushType = "draw";
   private selectedStamp: Stamp = Glider;
-  private readonly availableStamps = [
-    { name: "Glider", stamp: Glider },
-    { name: "Small Exploder", stamp: SmallExploder },
-    { name: "Lightweight Spaceship", stamp: LightweightSpaceship },
-    { name: "Tumbler", stamp: Tumbler },
-    { name: "Gosper Glider Gun", stamp: GosperGliderGun },
-    { name: "Laser Gun", stamp: LaserGun },
-  ];
-
-  // Control references
-  private cellCountStat?: p5.Element;
-  private volatileStat?: p5.Element;
-  private hoverInfo?: p5.Element;
-  private scaleStat?: p5.Element;
-  private centerStat?: p5.Element;
-  private ruleSelect?: p5.Element;
-  private stampSelect?: p5.Element;
-  private ruleNameInput?: p5.Element;
-  private ruleBornInput?: p5.Element;
-  private ruleLiveInput?: p5.Element;
-  private ruleColorInput?: p5.Element;
-  private ruleDecayInput?: p5.Element;
-  private ruleSaveBtn?: p5.Element;
-  private ruleFieldsContainer?: p5.Element;
+  private controls?: Controls;
+  private readonly stampMap = {
+    Glider,
+    SmallExploder,
+    LightweightSpaceship,
+    Tumbler,
+    GosperGliderGun,
+    LaserGun,
+  };
 
   constructor(
     public config: {
@@ -112,13 +96,14 @@ export class LifeModel {
         grid: {};
       };
     },
-    controls?: ControlsBuilder
+    controls?: Controls,
   ) {
     this.mouse = new P5MouseEvents(config.sketch);
     this.loadCustomRules();
     this.initMouseControl();
 
     if (controls) {
+      this.controls = controls;
       this.initControls(controls);
     }
 
@@ -177,7 +162,7 @@ export class LifeModel {
       this.config.center.add(
         this.mouseToScreenPos()
           .sub(this.config.center)
-          .mult(1 - factor)
+          .mult(1 - factor),
       );
 
       console.log(this.config.scale, e.deltaX, e.deltaY, e.deltaZ);
@@ -188,239 +173,80 @@ export class LifeModel {
     });
   }
 
-  private initControls(controls: ControlsBuilder) {
-    const p = this.config.sketch;
-
-    // Simulation controls section
-    const simulationSection = controls.addSection(p, "Simulation");
-
-    simulationSection.addButton("▶ Single Step", () => this.update());
-
-    const sprintBtn = simulationSection.addButton(this.sprint ? "⏸ Pause" : "▶▶ Play", () => {
+  private initControls(controls: Controls) {
+    // Wire up control subscriptions
+    controls.subscribe("step", () => this.update());
+    
+    controls.subscribe("togglePlay", () => {
       this.sprint = !this.sprint;
-      sprintBtn.html(this.sprint ? "⏸ Pause" : "▶▶ Play");
-      if (this.sprint) {
-        sprintBtn.addClass("active");
-      } else {
-        sprintBtn.removeClass("active");
-      }
+      controls.set("togglePlay", this.sprint ? "⏸ Pause" : "▶▶ Play");
     });
 
-    const autoZoomBtn = simulationSection.addButton(this.autoZoom ? "🔒 Lock Zoom" : "🔓 Auto Zoom", () => {
+    controls.subscribe("toggleZoom", () => {
       this.autoZoom = !this.autoZoom;
-      autoZoomBtn.html(this.autoZoom ? "🔒 Lock Zoom" : "🔓 Auto Zoom");
-      if (this.autoZoom) {
-        autoZoomBtn.addClass("active");
-      } else {
-        autoZoomBtn.removeClass("active");
-      }
+      controls.set("toggleZoom", this.autoZoom ? "🔒 Lock Zoom" : "🔓 Auto Zoom");
     });
-    if (this.autoZoom) {
-      autoZoomBtn.addClass("active");
-    }
 
-    simulationSection.addButton("Clear", () => {
+    controls.subscribe("clear", () => {
       this.cells = [];
       this.volatile.clear();
     });
 
-    controls.addDivider(p);
-
-    // Drawing controls section
-    const drawingSection = controls.addSection(p, "Drawing");
-
-    // Brush type radio buttons
-    const brushContainer = p.createDiv();
-    brushContainer.class("sketch-controls__radio-group");
-    brushContainer.parent(drawingSection["section"]);
-
-    // const brushLabel = p.createElement("span", "Brush Type");
-    // brushLabel.class("sketch-controls__label");
-    // brushLabel.parent(brushContainer);
-
-    const radioGroup = p.createDiv();
-    radioGroup.class("sketch-controls__radios");
-    radioGroup.parent(brushContainer);
-
-    // Create radio buttons for each brush type
-    const radioName = `brush-type-${Date.now()}`;
-
-    ["draw", "erase", "stamp"].forEach((type, index) => {
-      const label = p.createElement("label");
-      label.parent(radioGroup);
-
-      const input = p.createElement("input");
-      input.attribute("type", "radio");
-      input.attribute("name", radioName);
-      input.attribute("value", type);
-      if (index === 0) input.attribute("checked", "");
-      input.parent(label);
-
-      (input.elt as HTMLInputElement).addEventListener("change", () => {
-        this.brushType = type as BrushType;
-        this.updateBrushUI();
-      });
-
-      const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
-      p.createElement("span", capitalizedType).parent(label);
+    controls.subscribe<BrushType>("brushType", value => {
+      this.brushType = value;
+      this.updateBrushVisibility(controls);
     });
 
-    // Stamp selector (shown only for stamp mode)
-    this.stampSelect = p.createElement("select") as p5.Element;
-    this.stampSelect.parent(drawingSection["section"]);
-    this.stampSelect.style("display", "none");
-
-    this.availableStamps.forEach(({ name }) => {
-      const opt = p.createElement("option", name);
-      opt.attribute("value", name);
-      opt.parent(this.stampSelect!);
-    });
-
-    (this.stampSelect as any).changed(() => {
-      const selectedName = this.stampSelect!.value() as string;
-      const found = this.availableStamps.find(s => s.name === selectedName);
-      if (found) this.selectedStamp = found.stamp;
-    });
-
-    // Rule select (shown for draw mode)
-    this.ruleSelect = p.createElement("select") as p5.Element;
-    this.ruleSelect.parent(drawingSection["section"]);
-
-    // Add built-in rules
-    const builtInGroup = p.createElement("optgroup");
-    builtInGroup.attribute("label", "Built-in Rules");
-    builtInGroup.parent(this.ruleSelect);
-
-    Object.values(Rules).forEach(rule => {
-      const opt = p.createElement("option", rule.name);
-      opt.attribute("value", rule.name);
-      opt.parent(builtInGroup);
-    });
-
-    // Add custom rules group
-    const customGroup = p.createElement("optgroup");
-    customGroup.attribute("label", "Custom Rules");
-    customGroup.parent(this.ruleSelect);
-
-    this.customRules.forEach(rule => {
-      const opt = p.createElement("option", rule.name);
-      opt.attribute("value", `custom:${rule.name}`);
-      opt.parent(customGroup);
-    });
-
-    // Add "Create..." option
-    const createOpt = p.createElement("option", "Create...");
-    createOpt.attribute("value", "create");
-    createOpt.parent(customGroup);
-
-    (this.ruleSelect as any).changed(() => {
-      const value = this.ruleSelect!.value() as string;
-
-      if (value === "create") {
-        this.createNewRule();
-      } else if (value.startsWith("custom:")) {
+    controls.subscribe<string>("ruleSelect", value => {
+      if (value.startsWith("custom:")) {
         const ruleName = value.substring(7);
         const customRule = this.customRules.find(r => r.name === ruleName);
-        if (customRule) {
-          this.selectedRule = customRule;
-          this.originalRule = customRule;
-          this.isEditingRule = false;
-          this.syncRuleFields();
-        }
+        if (customRule) this.selectedRule = customRule;
       } else {
         const builtInRule = Object.values(Rules).find(r => r.name === value);
-        if (builtInRule) {
-          this.selectedRule = builtInRule;
-          this.originalRule = builtInRule;
-          this.isEditingRule = false;
-          this.syncRuleFields();
-        }
+        if (builtInRule) this.selectedRule = builtInRule;
       }
     });
 
-    // Rule fields container
-    this.ruleFieldsContainer = p.createDiv();
-    this.ruleFieldsContainer.class("sketch-controls__rule-fields");
-    this.ruleFieldsContainer.parent(drawingSection["section"]);
+    controls.subscribe<string>("stampSelect", value => {
+      this.selectedStamp = this.stampMap[value as keyof typeof this.stampMap] || Glider;
+    });
 
-    // Rule name
-    const nameGroup = p.createDiv();
-    nameGroup.class("sketch-controls__input-group");
-    nameGroup.parent(this.ruleFieldsContainer);
+    controls.subscribe("saveRule", () => {
+      // Get values from controls
+      const name = controls.get<string>("ruleName");
+      const bornStr = controls.get<string>("ruleBorn");
+      const liveStr = controls.get<string>("ruleLive");
+      const color = controls.get<string>("ruleColor");
+      const decayStr = controls.get<string>("ruleDecay");
 
-    const nameLabel = p.createElement("span", "Name");
-    nameLabel.parent(nameGroup);
+      if (!name || !bornStr || !liveStr || !color) return;
 
-    this.ruleNameInput = p.createInput(this.selectedRule.name);
-    this.ruleNameInput.parent(nameGroup);
-    (this.ruleNameInput as any).input(() => this.onRuleFieldChange());
+      const born = bornStr.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      const live = liveStr.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      const decay = parseInt(decayStr || "0");
 
-    // Born values
-    const bornGroup = p.createDiv();
-    bornGroup.class("sketch-controls__input-group");
-    bornGroup.parent(this.ruleFieldsContainer);
+      const newRule: Rule = {
+        name,
+        color: { hex: color },
+        born,
+        live,
+        decay: decay > 0 ? decay : undefined,
+      };
 
-    const bornLabel = p.createElement("span", "Born");
-    bornLabel.parent(bornGroup);
+      this.customRules = this.customRules.filter(r => r.name !== name);
+      this.customRules.push(newRule);
+      this.saveCustomRules();
+      this.selectedRule = newRule;
+    });
 
-    this.ruleBornInput = p.createInput(this.selectedRule.born.join(","));
-    this.ruleBornInput.parent(bornGroup);
-    (this.ruleBornInput as any).input(() => this.onRuleFieldChange());
+    // Initialize visibility
+    this.updateBrushVisibility(controls);
+  }
 
-    // Live values
-    const liveGroup = p.createDiv();
-    liveGroup.class("sketch-controls__input-group");
-    liveGroup.parent(this.ruleFieldsContainer);
-
-    const liveLabel = p.createElement("span", "Live");
-    liveLabel.parent(liveGroup);
-
-    this.ruleLiveInput = p.createInput(this.selectedRule.live.join(","));
-    this.ruleLiveInput.parent(liveGroup);
-    (this.ruleLiveInput as any).input(() => this.onRuleFieldChange());
-
-    // Decay
-    const decayGroup = p.createDiv();
-    decayGroup.class("sketch-controls__input-group");
-    decayGroup.parent(this.ruleFieldsContainer);
-
-    const decayLabel = p.createElement("span", "Decay");
-    decayLabel.parent(decayGroup);
-
-    // Color
-    const colorGroup = p.createDiv();
-    colorGroup.class("sketch-controls__input-group");
-    colorGroup.parent(this.ruleFieldsContainer);
-
-    const colorLabel = p.createElement("span", "Color");
-    colorLabel.parent(colorGroup);
-
-    this.ruleColorInput = p.createInput(this.selectedRule.color.hex);
-    this.ruleColorInput.attribute("type", "color");
-    this.ruleColorInput.parent(colorGroup);
-    (this.ruleColorInput as any).input(() => this.onRuleFieldChange());
-
-    this.ruleDecayInput = p.createInput(String(this.selectedRule.decay ?? 0), "number");
-    this.ruleDecayInput.parent(decayGroup);
-    (this.ruleDecayInput as any).input(() => this.onRuleFieldChange());
-
-    // Save button
-    this.ruleSaveBtn = p.createButton("Save Rule");
-    this.ruleSaveBtn.parent(this.ruleFieldsContainer);
-    this.ruleSaveBtn.mouseClicked(() => this.saveCustomRule());
-    this.updateSaveButtonState();
-
-    this.hoverInfo = drawingSection.addHighlight();
-
-    controls.addDivider(p);
-
-    // Stats section
-    const statsSection = controls.addSection(p, "Stats");
-
-    this.cellCountStat = statsSection.addStat();
-    this.volatileStat = statsSection.addStat();
-    this.scaleStat = statsSection.addStat();
-    this.centerStat = statsSection.addStat();
+  private updateBrushVisibility(controls: Controls) {
+    // Show/hide controls based on brush type - for now just a placeholder
+    // In future, we could use CSS classes or dynamic panel updates
   }
 
   private handleBrushAction(position: p5.Vector) {
@@ -434,19 +260,6 @@ export class LifeModel {
       case "stamp":
         this.stamp(this.selectedStamp, position);
         break;
-    }
-  }
-
-  private updateBrushUI() {
-    // Show/hide controls based on brush type
-    if (this.ruleSelect) {
-      this.ruleSelect.style("display", this.brushType === "draw" ? "block" : "none");
-    }
-    if (this.ruleFieldsContainer) {
-      this.ruleFieldsContainer.style("display", this.brushType === "draw" ? "block" : "none");
-    }
-    if (this.stampSelect) {
-      this.stampSelect.style("display", this.brushType === "stamp" ? "block" : "none");
     }
   }
 
@@ -566,12 +379,12 @@ export class LifeModel {
     s.colorMode("hsl", 1); // easiest to think about
     s.background(0);
 
-    // Update stats displays
+    if (this.controls) this.updateStats(this.controlsisplays
     this.updateStats();
 
     s.translate(
       this.config.sketch.width / 2 + this.config.center.x,
-      this.config.sketch.height / 2 + this.config.center.y
+      this.config.sketch.height / 2 + this.config.center.y,
     );
 
     // this.drawVolatile(s);
@@ -858,37 +671,15 @@ export class LifeModel {
     // Set to the newly saved rule
     (this.ruleSelect as any).value(`custom:${this.selectedRule.name}`);
   }
-
-  private updateStats() {
+controls: Controls) {
     const volatileCount = Array.from(this.volatile.values()).reduce((sum, ySet) => sum + ySet.size, 0);
     const hoverText = this.getHoverInfo();
 
-    if (this.cellCountStat) {
-      this.cellCountStat.html(
-        `<span>Cells</span><span class="sketch-controls__stat-value">${this.allCells().length}</span>`
-      );
-    }
-
-    if (this.volatileStat) {
-      this.volatileStat.html(`<span>Active</span><span class="sketch-controls__stat-value">${volatileCount}</span>`);
-    }
-
-    if (this.scaleStat) {
-      this.scaleStat.html(
-        `<span>Zoom</span><span class="sketch-controls__stat-value">${this.config.scale.toFixed(2)}x</span>`
-      );
-    }
-
-    if (this.centerStat) {
-      this.centerStat.html(
-        `<span>Pan</span><span class="sketch-controls__stat-value">(${this.config.center.x.toFixed(
-          0
-        )}, ${this.config.center.y.toFixed(0)})</span>`
-      );
-    }
-
-    if (this.hoverInfo) {
-      this.hoverInfo.html(hoverText);
+    controls.set("cellCount", `Cells: ${this.allCells().length}`);
+    controls.set("volatile", `Active: ${volatileCount}`);
+    controls.set("scale", `Zoom: ${this.config.scale.toFixed(2)}x`);
+    controls.set("center", `Pan: (${this.config.center.x.toFixed(0)}, ${this.config.center.y.toFixed(0)})`);
+    controls.set("hoverInfo", hoverText); this.hoverInfo.html(hoverText);
     }
   }
 

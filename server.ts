@@ -1,15 +1,11 @@
-import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { serveDir, serveFile } from "https://deno.land/std@0.208.0/http/file_server.ts";
 import { transpile } from "jsr:@deno/emit@0.46.0";
-import { SketchIndex, SketchMeta } from "./src/common.ts";
 
 const PORT = 8000;
 
 const shrug = new Response("Not found", { status: 404 });
 const squint = new Response("Access denied", { status: 403 });
 const slapAria = new Response("Transpilation failed", { status: 500 });
-
-type RawSketchIndex = Record<string, Omit<SketchMeta, "name"> & { hidden?: boolean }>;
 
 const wsClients = new Set<WebSocket>();
 const watcher = Deno.watchFs(["."]);

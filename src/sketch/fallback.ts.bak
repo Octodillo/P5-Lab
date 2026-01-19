@@ -1,5 +1,5 @@
-import { SketchController } from "./common.ts";
-import { section, stat } from "./controls.ts";
+import { SketchController } from "../common.ts";
+import { section, stat } from "../controls.ts";
 
 // deno-lint-ignore no-explicit-any
 type AnyWindow = Window & typeof globalThis & { [key: string]: any };
@@ -114,5 +114,5 @@ new SketchController(
 
       time += 0.05;
     };
-  }
+  },
 ).init();

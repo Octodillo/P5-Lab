@@ -1,4 +1,4 @@
-import { Coordinate } from "../common.ts";
+import { Coordinate } from "../../common.ts";
 import { Rule, GOL as Conway } from "../life-v1/rules.ts";
 import Universe from "./universe.ts";
 
@@ -60,7 +60,11 @@ export class GOL extends Cell<2, GOLBehavior> {
     throw new Error("Method not implemented.");
   }
 
-  constructor(universe: Universe<2>, position: Coordinate<2>, public rule: Rule) {
+  constructor(
+    universe: Universe<2>,
+    position: Coordinate<2>,
+    public rule: Rule,
+  ) {
     super(universe, position);
   }
 

@@ -1,6 +1,6 @@
 // import { assert } from "https://deno.land/std@0.208.0/assert/assert.ts";
 import Rules, { Rule } from "../life-v1/rules.ts";
-import { Map2, number2, P5MouseEvents, Set2 } from "../common.ts";
+import { Map2, number2, P5MouseEvents, Set2 } from "../../common.ts";
 import { Stamp } from "./stamps.ts";
 
 type CellBehavior = (typeof Cell.Behaviors)[number];
@@ -15,7 +15,11 @@ export class Cell {
 
   private neighbors: Cell[] = [];
 
-  constructor(public readonly life: Life, public readonly rule: Rule, public readonly position: number2) {}
+  constructor(
+    public readonly life: Life,
+    public readonly rule: Rule,
+    public readonly position: number2,
+  ) {}
 
   getNextBehavior() {
     if (this.isFullyDecayed()) return "delete";
@@ -78,7 +82,7 @@ export class Cell {
   die(instant = false) {
     if (this.isDead()) return;
     this.disconnect();
-    this._decay = instant ? this.rule.decay ?? 0 : 0;
+    this._decay = instant ? (this.rule.decay ?? 0) : 0;
     if (this.isFullyDecayed()) this.life.delete(this.position);
   }
 

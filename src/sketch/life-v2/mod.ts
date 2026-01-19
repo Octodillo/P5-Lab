@@ -1,4 +1,5 @@
-import { number2, SketchController } from "../common.ts";
+import { number2 } from "../../common.ts";
+import { initSketch } from "../../sketch.ts";
 import { Life } from "./model.ts";
 import Rules from "../life-v1/rules.ts";
 import { Glider, GosperGliderGun } from "../life-v2/stamps.ts";
@@ -15,11 +16,11 @@ import {
   stat,
   tabs,
   textInput,
-} from "../controls.ts";
+} from "../../controls.ts";
 
 type SimMode = "stop" | "run" | "turbo";
 
-new SketchController(
+initSketch(
   [
     section("Simulation & View", [
       row([
@@ -45,7 +46,7 @@ new SketchController(
             "rule",
             Object.entries(Rules).map(([key, rule]) => option(rule.name, key)),
             Rules.GOL.name,
-            "Rule"
+            "Rule",
           ),
           textInput("ruleName", undefined, undefined, "Name"),
           row([
@@ -63,7 +64,7 @@ new SketchController(
             "stampSelect",
             [option("Glider", "glider"), option("Gosper Glider Gun", "gosperGliderGun")],
             "glider",
-            "Pattern"
+            "Pattern",
           ),
           row([checkbox("stampRotate", "Rotate on click", false)]),
           stat("stampSize", "Size: —"),
@@ -85,7 +86,7 @@ new SketchController(
       }),
     ]),
   ],
-  (sketch, controls) => {
+  ({ p5: sketch, controls }) => {
     const life = new Life();
 
     controls.subscribe("clear", () => life.cells.clear());
@@ -170,5 +171,5 @@ new SketchController(
       });
       sketch.pop();
     };
-  }
-).init();
+  },
+);

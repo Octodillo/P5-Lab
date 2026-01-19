@@ -13,13 +13,11 @@ export class SketchController {
   private p5Instance: p5 | null = null;
   private controlsPanel: HTMLElement | p5.Element | null = null;
   private resizeObserver: ResizeObserver | null = null;
-  private readonly descriptors: ControlDesc[] | null;
-  private readonly sketchFn: ((p: p5, controls: Controls) => void) | ((p: p5, controls: ControlsBuilder) => void);
 
-  constructor(descriptors: ControlDesc[], sketchFn?: (p: p5, controls: Controls) => void) {
-    this.descriptors = descriptors;
-    this.sketchFn = sketchFn!;
-  }
+  constructor(
+    private readonly descriptors: ControlDesc[],
+    private readonly sketchFn: (p: p5, controls: Controls) => void,
+  ) {}
 
   /**
    * Initialize the sketch
@@ -41,7 +39,7 @@ export class SketchController {
       panel = document.createElement("div");
       panel.className = "sketch-controls";
 
-      const renderer = new ControlsRenderer(p);
+      const renderer = new ControlsRenderer();
       const controls = renderer.render(this.descriptors!, panel);
 
       (this.sketchFn as (p: p5, controls: Controls) => void)(p, controls);
