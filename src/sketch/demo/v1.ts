@@ -1,5 +1,5 @@
 // NOTE: This sketch uses the legacy imperative API
-import { initSketch } from "../../sketch.ts";
+import { initSketch } from "../../lab.ts";
 
 initSketch([], ({ p5: p, controls }) => {
   // State

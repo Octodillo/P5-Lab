@@ -1,4 +1,4 @@
-import { initSketch } from "../../sketch.ts";
+import { initSketch } from "../../lab.ts";
 import {
   button,
   checkbox,

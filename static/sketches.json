@@ -53,5 +53,13 @@
     "name": "Sorting Visualizer",
     "entry": "sorting-vis/mod.ts",
     "description": "Sorting visualizer"
+  },
+  {
+    "name": "Overtones Visualizer",
+    "entry": "sound/overtones/mod.ts"
+  },
+  {
+    "name": "Forier Transform",
+    "entry": "sound/forier/mod.ts"
   }
 ]

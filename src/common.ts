@@ -300,3 +300,8 @@ export function zip<T>(...arrays: T[][]): T[][] {
   const length = Math.min(...arrays.map(arr => arr.length));
   return Array.from({ length }, (_, i) => arrays.map(arr => arr[i]));
 }
+
+export function cross<T>(...arrays: T[][]): T[][] {
+  if (arrays.length === 0) return [[]];
+  return arrays.reduce<T[][]>((acc, arr) => acc.flatMap(a => arr.map(b => [...a, b])), [[]]);
+}

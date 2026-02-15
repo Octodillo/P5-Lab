@@ -1,4 +1,4 @@
-import { initSketch } from "../../sketch.ts";
+import { initSketch } from "../../lab.ts";
 import { section, row, button, divider } from "../../controls.ts";
 import { hexagon } from "./constructions.ts";
 import { Construction } from "./lib.ts";

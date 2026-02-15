@@ -1,8 +1,8 @@
-import { number2 } from "../../common.ts";
-import { initSketch } from "../../sketch.ts";
-import { Life } from "./model.ts";
-import Rules from "../life-v1/rules.ts";
-import { Glider, GosperGliderGun } from "../life-v2/stamps.ts";
+import { number2 } from "../../../common.ts";
+import { initSketch } from "../../../sketch.ts";
+import { Life } from "../../life-v2./gol/v2/model.ts";
+import Rules from "../../life-v1/rules.ts";
+import { Glider, GosperGliderGun } from "../../gol/v2/stamps.ts";
 import {
   button,
   checkbox,
@@ -16,7 +16,7 @@ import {
   stat,
   tabs,
   textInput,
-} from "../../controls.ts";
+} from "../../../controls.ts";
 
 type SimMode = "stop" | "run" | "turbo";
 
