@@ -1,6 +1,8 @@
+// Obsolete, outdated, broken
+
 import p5 from "p5";
-import type { Rule } from "./rules.ts";
-import * as Rules from "./rules.ts";
+import type { Rule } from "../rules.ts";
+import * as Rules from "../rules.ts";
 import { Stamp, Glider, SmallExploder, LightweightSpaceship, Tumbler, GosperGliderGun, LaserGun } from "./stamps.ts";
 import { Controls } from "../../controls.ts";
 import { P5MouseEvents } from "../../sketch.ts";
@@ -379,7 +381,7 @@ export class LifeModel {
     s.colorMode("hsl", 1); // easiest to think about
     s.background(0);
 
-    if (this.controls) this.updateStats(this.controlsisplays
+    if (this.controls) this.updateStats(this.controlsisplays)
     this.updateStats();
 
     s.translate(
@@ -670,8 +672,7 @@ export class LifeModel {
 
     // Set to the newly saved rule
     (this.ruleSelect as any).value(`custom:${this.selectedRule.name}`);
-  }
-controls: Controls) {
+    
     const volatileCount = Array.from(this.volatile.values()).reduce((sum, ySet) => sum + ySet.size, 0);
     const hoverText = this.getHoverInfo();
 

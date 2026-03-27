@@ -1,10 +1,5 @@
 import p5, { Color, Vector } from "p5";
 import { decide, Decider, proxy } from "../../decision.ts";
-import { SketchInstance } from "../../lab.ts";
-
-type BoidSketch = SketchInstance<{
-  boids: Boid[];
-}>;
 
 interface BoidD {
   position: p5.Vector;

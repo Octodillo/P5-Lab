@@ -301,7 +301,7 @@ export function zip<T>(...arrays: T[][]): T[][] {
   return Array.from({ length }, (_, i) => arrays.map(arr => arr[i]));
 }
 
-export function cross<T>(...arrays: T[][]): T[][] {
-  if (arrays.length === 0) return [[]];
-  return arrays.reduce<T[][]>((acc, arr) => acc.flatMap(a => arr.map(b => [...a, b])), [[]]);
+export function cross<T extends unknown[]>(...arrays: { [K in keyof T]: T[K][] }): T[] {
+  if (arrays.length === 0) return [[]] as unknown as T[];
+  return arrays.reduce<unknown[][]>((acc, arr) => acc.flatMap(a => (arr as unknown[]).map(b => [...a, b])), [[]]) as T[];
 }

@@ -1,11 +1,21 @@
 import p5 from "p5";
 import { EventEmitter } from "events";
-import { Controls } from "./controls.ts";
+import { button, type ControlDesc, Controls, numberInput, radio, row, stat } from "./controls.ts";
 import { getElementByIdOrError, sketchSelectButton } from "./render.ts";
 
+const Controller = [
+  row([
+    radio("updateMode", "pause", "Pause"),
+    radio("updateMode", "play", "Play", true),
+    radio("updateMode", "turbo", "Turbo"),
+  ]),
+  row([button("reload", "Reload"), button("step", "Step")]),
+  numberInput("targetFPS", 60, "60", "Target FPS"),
+  stat("currentFPS", "-", "Current FPS"),
+];
+
 export class P5Lab {
-  private sketch: _Sketch | undefined;
-  private p5: p5 | undefined;
+  private sketch: Sketch | undefined;
   public readonly index: SketchIndex = [];
   public readonly containers = {
     sketch: getElementByIdOrError("sketch-container"),
@@ -13,10 +23,14 @@ export class P5Lab {
     controls: getElementByIdOrError("controls-container"),
     globals: getElementByIdOrError("global-controls-container"),
   } as const;
-  public readonly controls = new Controls(this.containers.globals);
+  public readonly controls = new Controls<typeof Controller>(this.containers.globals);
+  turboUpdatesPerFrame = 10;
 
   constructor() {
     Object.assign(globalThis, { Lab: this });
+    this.controls.render(Controller);
+
+    this.controls.subscribe("step", () => this.sketch?.update());
   }
 
   request(meta: SketchMeta) {
@@ -24,81 +38,91 @@ export class P5Lab {
     return import(`/src/sketch/${meta.entry}?t=${cacheBuster}`);
   }
 
-  receive(sketch: _Sketch) {
+  receive(Factory: SketchFactory) {
     this.remove();
-    this.p5 = new p5(p => {
-      // TODO
+
+    new p5(p5 => {
+      p5.setup = () => {
+        const width = this.containers.sketch.clientWidth;
+        const height = this.containers.sketch.clientHeight;
+        p5.createCanvas(width, height);
+
+        this.sketch = new Factory(p5, this);
+        this.sketch.controls.render(this.sketch.schema);
+        this.sketch.setup?.();
+      };
+
+      p5.draw = () => {
+        const mode = this.controls.values.updateMode;
+        if (mode === "play") {
+          this.sketch!.update();
+        } else if (mode === "turbo") {
+          for (let i = 0; i < this.turboUpdatesPerFrame; i++) this.sketch!.update();
+        }
+
+        // Wrap in push/pop to hopefully prevent intermittent flickering
+        p5.push();
+        this.sketch!.draw();
+        p5.pop();
+      };
     }, this.containers.sketch);
   }
 
   remove() {
-    this.sketch?.remove?.(this.p5!);
+    this.sketch?.remove?.();
     this.sketch = undefined;
     this.containers.sketch.innerHTML = "";
     this.containers.controls.innerHTML = "";
   }
 
-  init = () => Promise.allSettled([this.hello(), this.refreshIndex()]);
-
-  hello = () =>
-    this.request({
-      name: "Hello",
-      entry: "hello.ts",
-    });
+  init = () =>
+    Promise.allSettled([
+      this.request({
+        name: "Hello",
+        entry: "hello.ts",
+      }),
+      this.refreshIndex(),
+    ]);
 
   refreshIndex = () =>
     fetch("/sketches.json")
       .then(r => r.json())
       .then((index: SketchIndex) => {
-        this.containers.controls.innerHTML = "";
+        this.containers.index.innerHTML = "";
         index.map(sketchSelectButton).forEach(butt => this.containers.index.appendChild(butt));
       });
 }
 
-export interface _Sketch<Config = unknown> {
-  config: Config;
-  setup?(p5: p5): void;
-  draw(p5: p5): void;
-  remove?(p5: p5): void;
+export abstract class Sketch<S extends readonly ControlDesc[] = readonly ControlDesc[]> {
+  abstract readonly schema: S;
+  public readonly controls: Controls<S>;
+
+  private resizeObserver: ResizeObserver;
+
+  constructor(
+    protected p5: p5,
+    protected lab: P5Lab,
+  ) {
+    this.controls = new Controls<S>(lab.containers.controls);
+    this.resizeObserver = new ResizeObserver(() => this.resize());
+    this.resizeObserver.observe(this.lab.containers.sketch);
+  }
+
+  setup?(): void;
+  abstract update(): void;
+  abstract draw(): void;
+
+  remove() {
+    this.resizeObserver.disconnect();
+    this.p5.remove();
+  }
+
+  resize() {
+    const width = this.lab.containers.sketch.clientWidth;
+    const height = this.lab.containers.sketch.clientHeight;
+    if (width > 0 && height > 0) this.p5.resizeCanvas(width, height);
+  }
 }
-
-// export abstract class Sketch<Config = unknown> {
-//   abstract meta: SketchMeta;
-
-//   public readonly mouse: LabMouse;
-
-//   setup() {
-//     this.lab.receive(this);
-//     this.p5.createCanvas(this.lab.containers.sketch.clientWidth, this.lab.containers.sketch.clientHeight);
-//     this.lab.containers.sketch.addEventListener("resize", () => this.resize());
-//   }
-
-//   abstract draw(): void;
-
-//   abstract remove(): void;
-
-//   constructor(
-//     protected lab: P5Lab,
-
-//     /** Configuration for the sketch, responded to instantly */
-//     public config: Config,
-//   ) {
-//     this.lab.receive(this);
-
-//     this.p5 = new p5(p5 => {
-//       p5.setup = () => this.setup();
-//       p5.draw = () => this.draw();
-//     }, this.lab.containers.sketch);
-//     this.mouse = new LabMouse(this.p5);
-//   }
-
-//   protected resize() {
-//     const width = this.lab.containers.sketch.clientWidth;
-//     const height = this.lab.containers.sketch.clientHeight;
-//     if (width > 0 && height > 0) this.p5.resizeCanvas(width, height);
-//   }
-// }
-
 export interface SketchMeta {
   name: string;
   entry: string;
@@ -151,7 +175,7 @@ export class LabMouse extends EventEmitter<{
   }
 }
 
-type SketchFactory = (p5: p5, lab: P5Lab) => void;
+type SketchFactory = new (p5: p5, lab: P5Lab) => Sketch;
 
 export const request = (meta: SketchMeta) => ((globalThis as any).Lab as P5Lab).request(meta);
-export const receive = (sketch: _Sketch) => ((globalThis as any).Lab as P5Lab).receive(sketch);
+export const receive = (sketch: SketchFactory) => ((globalThis as any).Lab as P5Lab).receive(sketch);

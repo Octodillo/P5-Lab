@@ -1,5 +1,6 @@
+// Obsolete, outdated, broken
 import p5 from "p5";
-import { GOL, Rule, Star } from "./rules.ts";
+import { GOL, Rule, Star } from "../rules.ts";
 import { LifeModel } from "./life.ts";
 
 export interface Stamp {

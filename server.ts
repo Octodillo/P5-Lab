@@ -8,7 +8,7 @@ const squint = new Response("Access denied", { status: 403 });
 const slapAria = new Response("Transpilation failed", { status: 500 });
 
 const wsClients = new Set<WebSocket>();
-const watcher = Deno.watchFs(["."]);
+const watcher = Deno.watchFs(["./src", "./static"]);
 (async () => {
   for await (const event of watcher) {
     if (event.kind === "modify" || event.kind === "create") {
@@ -84,10 +84,7 @@ const staticHeaders = {
   "Cache-Control": "no-cache, no-store, must-revalidate",
 };
 
-console.log(`📁 /api/src/ → ./sketches/ (TypeScript transpiled on-the-fly)`);
-console.log(`🔄 Live reload enabled`);
-
-const server = Deno.serve({ port: PORT }, (req: Request) => {
+const server = Deno.serve({ port: PORT, onListen: () => {} }, (req: Request) => {
   const path = new URL(req.url).pathname;
   console.log(`🍽️\t${path}`);
   const parts = path.slice(1).split("/");
@@ -109,6 +106,9 @@ const server = Deno.serve({ port: PORT }, (req: Request) => {
   }
 });
 
-console.log("🎨 Server at ${server.addr}");
+console.log(`🎨 Server at ${server.addr.hostname}:${server.addr.port}`);
+console.log(`📁 / → ./static/index.html`);
+console.log(`📁 /... → ./static/...`);
+console.log(`📁 /src/... → ./src/sketches/...`);
+console.log(`📁 /ws → Live reload`);
 console.log("🏳️‍⚧️ Transpiling TypeScript on-the-fly");
-console.log(`🔄 Live reload enabled`);

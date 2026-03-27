@@ -1,14 +1,14 @@
 // import { assert } from "https://deno.land/std@0.208.0/assert/assert.ts";
-import Rules, { Rule } from "../life-v1/rules.ts";
-import { Map2, number2, P5MouseEvents, Set2 } from "../../common.ts";
+import { Rule } from "../rules.ts";
+import { Map2, number2, Set2 } from "../../../../common.ts";
 import { Stamp } from "./stamps.ts";
 
 type CellBehavior = (typeof Cell.Behaviors)[number];
 
 export class Cell {
-  public static readonly Behaviors = ["born", "live", "die", "decay", "delete"] as const;
+  public static readonly Behaviors = ["born", "live", "die", "decay"] as const;
 
-  private _decay = -1;
+  private _decay = 0;
   get decay() {
     return this._decay;
   }
@@ -22,7 +22,6 @@ export class Cell {
   ) {}
 
   getNextBehavior() {
-    if (this.isFullyDecayed()) return "delete";
     if (this.isDead()) return "decay";
     const behavior = !this.rule.live.includes(this.neighbors.length) ? "die" : "live";
     return behavior;
@@ -40,12 +39,10 @@ export class Cell {
         this.die();
         break;
       case "decay":
-        this._decay++;
-        this.life.destablize(this.position);
+        this.advanceDecay();
         break;
-      case "delete":
-        this.life.delete(this.position);
-        break;
+      default:
+        console.error(`Unknown behavior: ${behavior satisfies never}`);
     }
   }
 
@@ -82,15 +79,17 @@ export class Cell {
   die(instant = false) {
     if (this.isDead()) return;
     this.disconnect();
-    this._decay = instant ? (this.rule.decay ?? 0) : 0;
-    if (this.isFullyDecayed()) this.life.delete(this.position);
+    if (instant) this.life.delete(this.position);
+    else this.advanceDecay();
   }
 
-  isFullyDecayed = () => this.decay >= (this.rule.decay ?? 0);
+  advanceDecay() {
+    this._decay++;
+    this.life.destablize(this.position);
+    if (this.decay >= (this.rule.decay ?? 1) - 1) this.life.delete(this.position);
+  }
 
-  isDead = () => this.decay > -1;
-
-  alpha = () => (this.decay + 2) / ((this.rule.decay ?? 0) + 2);
+  isDead = () => this.decay > 0;
 }
 
 export class Life {
@@ -98,6 +97,7 @@ export class Life {
   unstable = new Set2();
 
   set(position: number2, cell: Cell) {
+    this.delete(position);
     this.cells.set(position, cell);
 
     // update bounds
@@ -108,6 +108,7 @@ export class Life {
   }
 
   place(position: number2, rule: Rule) {
+    this.delete(position);
     const cell = new Cell(this, rule, position);
     cell.behave("born");
     return cell;
@@ -118,7 +119,7 @@ export class Life {
   }
 
   delete(position: number2) {
-    this.get(position)?.die(true);
+    this.get(position)?.disconnect();
     this.cells.unset(position);
     this.surroundingPositions(position, true).forEach(pos => this.destablize(pos));
   }
@@ -167,7 +168,7 @@ export class Life {
 
     this.unstable.clear();
 
-    // Apply non-birth actions first, then births (to avoid modifying graph during planning phase)
+    // Apply non-birth actions first to avoid modifying graph during planning phase
     actions.sort((a, b) => (a.behavior === "born" ? 1 : 0) - (b.behavior === "born" ? 1 : 0));
     actions.forEach(({ cell, behavior }) => cell.behave(behavior));
   }
@@ -178,19 +179,3 @@ export class Life {
     return [this.low, this.high];
   };
 }
-
-// // passes
-// Deno.test("GOL", () => {
-//   const life = new Life();
-
-//   life.set([0, 0], Rules.GOL);
-//   life.set([1, 0], Rules.GOL);
-//   life.set([0, 1], Rules.GOL);
-
-//   life.set([3, 3], Rules.GOL);
-
-//   life.update();
-
-//   assert(!!life.get([1, 1]), "Cell wasn't born");
-//   assert(!life.get([3, 3]), "Cell didn't die");
-// });

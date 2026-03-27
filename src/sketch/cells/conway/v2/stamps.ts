@@ -1,12 +1,14 @@
-import { number2 } from "../../../common.ts";
-import { GOL, Rule } from "../../life-v1/rules.ts";
+import { number2 } from "../../../../common.ts";
+import { GOL, Rule, Star } from "../rules.ts";
 
 export interface Stamp {
+  name: string;
   rule: Rule;
   positions: number2[];
 }
 
 export const GosperGliderGun: Stamp = {
+  name: "Gosper Glider Gun",
   rule: GOL,
   positions: [
     [0, 4],
@@ -49,6 +51,7 @@ export const GosperGliderGun: Stamp = {
 };
 
 export const Glider: Stamp = {
+  name: "Glider",
   rule: GOL,
   positions: [
     [0, 0],
@@ -58,3 +61,83 @@ export const Glider: Stamp = {
     [1, 2],
   ],
 };
+
+export const SmallExploder: Stamp = {
+  name: "Small exploder",
+  rule: GOL,
+  positions: [
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [1, 2],
+    [2, 0],
+    [2, 2],
+    [3, 1],
+  ],
+};
+
+export const LightweightSpaceship: Stamp = {
+  name: "Lightweight spaceship",
+  rule: GOL,
+  positions: [
+    [0, 1],
+    [0, 2],
+    [1, 0],
+    [2, 0],
+    [3, 0],
+    [3, 1],
+    [3, 2],
+    [2, 3],
+  ],
+};
+
+export const Tumbler: Stamp = {
+  name: "Tumbler",
+  rule: GOL,
+  positions: [
+    [0, 0],
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [0, 3],
+    [0, 4],
+    [1, 3],
+    [1, 4],
+    [2, 2],
+    [3, 0],
+    [3, 1],
+    [4, 0],
+    [4, 1],
+    [3, 3],
+    [3, 4],
+    [4, 3],
+    [4, 4],
+  ],
+};
+
+export const LaserGun: Stamp = {
+  name: "Laser gun",
+  rule: Star,
+  positions: [
+    [0, 0],
+    [-2, 4],
+    [-2, 3],
+    [-2, 2],
+    [-2, 1],
+    [-2, 0],
+    [-2, -1],
+    [-2, -2],
+    [-2, -3],
+    [-2, -4],
+    [-1, 3],
+    [-1, -3],
+    [0, 2],
+    [0, 0],
+    [0, -2],
+    [1, 1],
+    [1, -1],
+    [2, 0],
+  ],
+};
+
+export default { Glider, SmallExploder, LightweightSpaceship, Tumbler, GosperGliderGun, LaserGun } as const;

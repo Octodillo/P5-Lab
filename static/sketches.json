@@ -1,7 +1,7 @@
 [
   {
     "name": "Animated Circles",
-    "entry": "animated-circles/mod.ts",
+    "entry": "old/animated-circles/mod.ts",
     "icon": "icons/animated-circles.svg",
     "description": "Simple animated circles demo",
     "warning": "Outdated"
@@ -41,12 +41,12 @@
   },
   {
     "name": "Game of Life",
-    "entry": "life-v2/mod.ts",
+    "entry": "cells/conway/v2/sketch.ts",
     "description": "Conway's Game of Life with multi-rule support"
   },
   {
     "name": "Particle System",
-    "entry": "particle-system/mod.ts",
+    "entry": "old/particle-system/mod.ts",
     "description": "Interactive particle effects"
   },
   {

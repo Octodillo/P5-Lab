@@ -1,97 +1,107 @@
-import { initSketch } from "../../lab.ts";
 import { section, row, button, divider } from "../../controls.ts";
+import { Sketch, receive } from "../../lab.ts";
 import { hexagon } from "./constructions.ts";
 import { Construction } from "./lib.ts";
 
-initSketch(
-  [
-    section("Drawing", []),
-    divider(),
-    section("Elementary", [
-      row([button("hand", "Hand"), button("point", "Point"), button("line", "Line"), button("circle", "Circle")]),
-    ]),
-    section("Compound", [
-      button("intersection", "Intersection"),
-      button("perp-bisector", "Perpendicular Bisector"),
-      button("midpoint", "Midpoint"),
-      button("erected-perp", "Erected Perpendicular"),
-      button("circumcenter", "Circumcenter"),
-      button("circle-thru-3", "Circle thru 3"),
-    ]),
-  ],
-  ({ p5: sketch, controls }) => {
-    const construction = new Construction(sketch, false);
-    const mouse = sketch.createVector();
-    construction
+const Controller = [
+  section("Drawing", []),
+  divider(),
+  section("Elementary", [
+    row([button("hand", "Hand"), button("point", "Point"), button("line", "Line"), button("circle", "Circle")]),
+  ]),
+  section("Compound", [
+    button("intersection", "Intersection"),
+    button("perp-bisector", "Perpendicular Bisector"),
+    button("midpoint", "Midpoint"),
+    button("erected-perp", "Erected Perpendicular"),
+    button("circumcenter", "Circumcenter"),
+    button("circle-thru-3", "Circle thru 3"),
+  ]),
+] as const;
+
+class EuclideanConstruction extends Sketch<typeof Controller> {
+  readonly schema = Controller;
+
+  private construction!: Construction;
+  private mouse!: ReturnType<typeof this.p5.createVector>;
+
+  override setup(): void {
+    const { p5 } = this;
+    this.construction = new Construction(p5, false);
+    this.mouse = p5.createVector();
+
+    this.construction
       .point({
         name: "mouse",
-        vector: mouse,
+        vector: this.mouse,
         visible: true,
-        color: sketch.color("pink"),
+        color: p5.color("pink"),
       })
       .point({
         name: "O",
-        vector: sketch.createVector(),
+        vector: p5.createVector(),
         visible: true,
-        color: sketch.color("white"),
+        color: p5.color("white"),
       })
       .point({
         name: "i",
-        vector: sketch.createVector(100, 0),
+        vector: p5.createVector(100, 0),
         visible: true,
-        color: sketch.color("lightgreen"),
+        color: p5.color("lightgreen"),
       })
       .point({
         name: "j",
-        vector: sketch.createVector(0, 100),
+        vector: p5.createVector(0, 100),
         visible: true,
-        color: sketch.color("lightgreen"),
+        color: p5.color("lightgreen"),
       })
       .line({
         name: "x-axis",
         point1: "O",
         point2: "i",
-        color: sketch.color("gray"),
+        color: p5.color("gray"),
         visible: true,
       })
       .line({
         name: "y-axis",
         point1: "O",
         point2: "j",
-        color: sketch.color("gray"),
+        color: p5.color("gray"),
         visible: true,
       })
       .line({
         name: "vector",
         point1: "O",
         point2: "mouse",
-        color: sketch.color("pink"),
+        color: p5.color("pink"),
         segment: true,
         visible: true,
       });
 
-    hexagon({ construction, prefix: "hex", center: "O", edge: "mouse" });
+    hexagon({ construction: this.construction, prefix: "hex", center: "O", edge: "mouse" });
 
-    // hexagon({ construction, prefix: "hexagon", center: "O", edge: "mouse" });
+    this.controls.subscribe("hand", () => {});
+    this.controls.subscribe("point", () => {});
+    this.controls.subscribe("line", () => {});
+    this.controls.subscribe("circle", () => {});
+    this.controls.subscribe("intersection", () => {});
+    this.controls.subscribe("perp-bisector", () => {});
+    this.controls.subscribe("midpoint", () => {});
+    this.controls.subscribe("erected-perp", () => {});
+    this.controls.subscribe("circumcenter", () => {});
+    this.controls.subscribe("circle-thru-3", () => {});
+  }
 
-    // Subscribe to button clicks
-    controls.subscribe("hand", () => {});
-    controls.subscribe("point", () => {});
-    controls.subscribe("line", () => {});
-    controls.subscribe("circle", () => {});
-    controls.subscribe("intersection", () => {});
-    controls.subscribe("perp-bisector", () => {});
-    controls.subscribe("midpoint", () => {});
-    controls.subscribe("erected-perp", () => {});
-    controls.subscribe("circumcenter", () => {});
-    controls.subscribe("circle-thru-3", () => {});
+  update(): void {}
 
-    sketch.draw = () => {
-      sketch.background(0);
-      sketch.translate(sketch.width / 2, sketch.height / 2);
-      sketch.scale(1, -1);
-      mouse.set(sketch.mouseX - sketch.width / 2, sketch.height / 2 - sketch.mouseY);
-      construction.draw();
-    };
-  },
-);
+  draw(): void {
+    const { p5 } = this;
+    p5.background(0);
+    p5.translate(p5.width / 2, p5.height / 2);
+    p5.scale(1, -1);
+    this.mouse.set(p5.mouseX - p5.width / 2, p5.height / 2 - p5.mouseY);
+    this.construction.draw();
+  }
+}
+
+receive(EuclideanConstruction);

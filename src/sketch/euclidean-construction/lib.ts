@@ -1,14 +1,12 @@
-/**
- * CASC.ts, by Sadie Dotzler (https://github.com/SadiePi)
- *
- * A small library on top of p5.js for creating compass and straightedge constructions
- */
-
 import p5 from "p5";
 
 export abstract class Point {
   private _vector?: p5.Vector;
-  constructor(public p5: p5, public visible: boolean, public color: p5.Color) {}
+  constructor(
+    public p5: p5,
+    public visible: boolean,
+    public color: p5.Color,
+  ) {}
 
   draw() {
     const p = this.getVector();
@@ -32,7 +30,12 @@ export abstract class Point {
 }
 
 class FreePoint extends Point {
-  constructor(p5: p5, public vector: p5.Vector | ((time: number) => p5.Vector), visible: boolean, color: p5.Color) {
+  constructor(
+    p5: p5,
+    public vector: p5.Vector | ((time: number) => p5.Vector),
+    visible: boolean,
+    color: p5.Color,
+  ) {
     super(p5, visible, color);
   }
 
@@ -48,7 +51,7 @@ export class Line {
     public point2: Point,
     public segment: boolean,
     public visible: boolean,
-    public color: p5.Color
+    public color: p5.Color,
   ) {}
   draw() {
     const p1 = this.point1.getVector();
@@ -76,7 +79,7 @@ class LinesIntersectionPoint extends Point {
     public line1: Line,
     public line2: Line,
     public override visible: boolean,
-    public override color: p5.Color
+    public override color: p5.Color,
   ) {
     super(p5, visible, color);
   }
@@ -136,7 +139,7 @@ export class Circle {
     public center: Point,
     public edge: Point,
     public visible: boolean,
-    public color: p5.Color
+    public color: p5.Color,
   ) {}
   draw() {
     const center = this.center.getVector();
@@ -156,7 +159,7 @@ class LineCircleIntersectionPoint extends Point {
     public circle: Circle,
     public toggle: boolean,
     public override visible: boolean,
-    public override color: p5.Color
+    public override color: p5.Color,
   ) {
     super(p5, visible, color);
   }
@@ -185,9 +188,9 @@ class LineCircleIntersectionPoint extends Point {
     return p5.Vector.add(
       this.p5.createVector(
         (det * d.y + toggle * sgn * d.x * discSqrt) / drSq,
-        (-det * d.x + toggle * this.p5.abs(d.y) * discSqrt) / drSq
+        (-det * d.x + toggle * this.p5.abs(d.y) * discSqrt) / drSq,
       ),
-      c
+      c,
     );
   }
 }
@@ -211,7 +214,7 @@ class CirclesIntersectionPoint extends Point {
     public circle2: Circle,
     public toggle: boolean,
     public override visible: boolean,
-    public override color: p5.Color
+    public override color: p5.Color,
   ) {
     super(p5, visible, color);
   }
@@ -250,7 +253,7 @@ export class Construction extends Map<string, Point | Line | Circle> {
   constructor(
     public p5: p5,
     public intermediatesVisible: boolean = false,
-    public defaultColor: p5.Color = p5.color("white")
+    public defaultColor: p5.Color = p5.color("white"),
   ) {
     super();
   }
@@ -290,7 +293,7 @@ export class Construction extends Map<string, Point | Line | Circle> {
   }): Construction {
     return this.set(
       params.name,
-      new FreePoint(this.p5, params.vector, params.visible ?? false, params.color ?? this.defaultColor)
+      new FreePoint(this.p5, params.vector, params.visible ?? false, params.color ?? this.defaultColor),
     );
   }
   public readonly P = this.point;
@@ -321,8 +324,8 @@ export class Construction extends Map<string, Point | Line | Circle> {
         this.get(params.point2) as Point,
         params.segment ?? false,
         params.visible ?? false,
-        params.color ?? this.defaultColor
-      )
+        params.color ?? this.defaultColor,
+      ),
     );
   }
   public readonly L = this.line;
@@ -344,8 +347,8 @@ export class Construction extends Map<string, Point | Line | Circle> {
         this.get(params.center) as Point,
         this.get(params.edge) as Point,
         params.visible ?? false,
-        params.color ?? this.defaultColor
-      )
+        params.color ?? this.defaultColor,
+      ),
     );
   }
   public readonly C = this.circle;
@@ -405,8 +408,8 @@ export class Construction extends Map<string, Point | Line | Circle> {
           o1 as Line,
           o2 as Line,
           params.visible ?? false,
-          params.color ?? this.defaultColor
-        )
+          params.color ?? this.defaultColor,
+        ),
       );
     else if (o1 instanceof Line && o2 instanceof Circle)
       this.set(
@@ -417,8 +420,8 @@ export class Construction extends Map<string, Point | Line | Circle> {
           o2 as Circle,
           params.toggle ?? false,
           params.visible ?? false,
-          params.color ?? this.defaultColor
-        )
+          params.color ?? this.defaultColor,
+        ),
       );
     else if (o1 instanceof Circle && o2 instanceof Line)
       this.set(
@@ -429,8 +432,8 @@ export class Construction extends Map<string, Point | Line | Circle> {
           o1 as Circle,
           params.toggle ?? false,
           params.visible ?? false,
-          params.color ?? this.defaultColor
-        )
+          params.color ?? this.defaultColor,
+        ),
       );
     else if (o1 instanceof Circle && o2 instanceof Circle)
       this.set(
@@ -441,8 +444,8 @@ export class Construction extends Map<string, Point | Line | Circle> {
           o2 as Circle,
           params.toggle ?? false,
           params.visible ?? false,
-          params.color ?? this.defaultColor
-        )
+          params.color ?? this.defaultColor,
+        ),
       );
     else console.error("Cannot add intersection involving Point");
 
