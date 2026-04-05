@@ -120,7 +120,7 @@ class GameOfLife extends Sketch<typeof Controller> {
     const maxDecay = rule.decay ?? 1;
     const customDecay = opts.alpha ?? 1;
 
-    // color.setAlpha((1 - cellDecay / (maxDecay + 1)) * customDecay);
+    color.setAlpha((1 - cellDecay / (maxDecay + 1)) * customDecay);
 
     this.p5.noStroke();
     this.p5.fill(color);
