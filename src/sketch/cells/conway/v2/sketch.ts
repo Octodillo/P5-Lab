@@ -1,7 +1,7 @@
 import { receive, Sketch } from "../../../../lab.ts";
 import { Life } from "./model.ts";
-import Stamps, { GosperGliderGun } from "./stamps.ts";
-import Rules, { Rule } from "../rules.ts";
+import { GosperGliderGun } from "./stamps.ts";
+import { Rule } from "../rules.ts";
 import { number2 } from "../../../../common.ts";
 
 import Controller from "./controller.ts";
