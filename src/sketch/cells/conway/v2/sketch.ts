@@ -133,16 +133,18 @@ class GameOfLife extends Sketch<typeof Controller> {
     return [Math.floor(x), Math.floor(y)];
   }
 
-  approachTargetFit(padding: number, asdf: number): void {
+  approachTargetFit(padding: number, lerp: number): void {
     const [low, high] = this.life.bounds();
     const width = high[0] - low[0] + 1 + padding;
     const height = high[1] - low[1] + 1 + padding;
     if (width <= 0 || height <= 0 || this.p5.width <= 0 || this.p5.height <= 0) return;
     const targetScale = Math.min(this.p5.width / width, this.p5.height / height);
     if (!isFinite(targetScale)) return;
-    this.viewScale += (targetScale - this.viewScale) * asdf;
-    this.viewPosition[0] = -((low[0] + high[0] + 1) / 2) * this.viewScale;
-    this.viewPosition[1] = -((low[1] + high[1] + 1) / 2) * this.viewScale;
+    this.viewScale += (targetScale - this.viewScale) * lerp;
+    const targetX = -((low[0] + high[0] + 1) / 2) * this.viewScale;
+    const targetY = -((low[1] + high[1] + 1) / 2) * this.viewScale;
+    this.viewPosition[0] += (targetX - this.viewPosition[0]) * lerp;
+    this.viewPosition[1] += (targetY - this.viewPosition[1]) * lerp;
   }
 }
 
