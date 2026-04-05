@@ -9,6 +9,7 @@ import Controller from "./controller.ts";
 const Magic = {
   autoFitLerpFactor: 0.1,
   cellPreviewAlpha: 0.65,
+  backgroundAlpha: 0.05,
 };
 
 class GameOfLife extends Sketch<typeof Controller> {
@@ -85,7 +86,7 @@ class GameOfLife extends Sketch<typeof Controller> {
   override draw(): void {
     const { p5 } = this;
     p5.colorMode("hsl", 1);
-    p5.background(0);
+    p5.background(Magic.backgroundAlpha);
     p5.translate(p5.width / 2 + this.viewPosition[0], p5.height / 2 + this.viewPosition[1]);
     p5.scale(this.viewScale);
 
