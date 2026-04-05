@@ -1,65 +1,38 @@
-[
-  {
-    "name": "Animated Circles",
-    "entry": "old/animated-circles/mod.ts",
-    "icon": "icons/animated-circles.svg",
-    "description": "Simple animated circles demo",
-    "warning": "Outdated"
+{
+  "sketches": {
+    "hello": {
+      "name": "Hello",
+      "entry": "hello.ts"
+    },
+    "demo": {
+      "name": "Controls Demo",
+      "entry": "demo-controls-v2/mod.ts",
+      "description": "Showcase of the declarative controls API",
+      "feature": true
+    },
+    "boids": {
+      "name": "Boids",
+      "entry": "boids/mod.ts",
+      "description": "Flocking simulation with emergent behavior",
+      "warning": "Placeholder"
+    },
+    "euclidean": {
+      "name": "Euclidean Constructions",
+      "entry": "euclidean-construction/mod.ts",
+      "description": "Compass and straightedge geometric constructions"
+    },
+    "life": {
+      "name": "Game of Life",
+      "entry": "cells/conway/v2/sketch.ts",
+      "description": "Conway's Game of Life with multi-rule support"
+    }
   },
-  {
-    "name": "Boids",
-    "entry": "boids/mod.ts",
-    "description": "Flocking simulation with emergent behavior",
-    "warning": "Placeholder"
-  },
-  {
-    "name": "Cell Universe",
-    "entry": "cell-universe/mod.ts",
-    "description": "Cellular automata exploration",
-    "warning": "Incomplete"
-  },
-  {
-    "name": "Controls Demo",
-    "entry": "demo-controls-v2/mod.ts",
-    "description": "Showcase of the declarative controls API",
-    "feature": true
-  },
-  {
-    "name": "Euclidean Constructions",
-    "entry": "euclidean-construction/mod.ts",
-    "description": "Compass and straightedge geometric constructions"
-  },
-  {
-    "name": "Newtonian Gravity",
-    "entry": "gravity-newton/mod.ts",
-    "description": "Classical gravitational simulation"
-  },
-  {
-    "name": "General Relativity",
-    "entry": "gravity-relativity/mod.ts",
-    "description": "Spacetime curvature visualization"
-  },
-  {
-    "name": "Game of Life",
-    "entry": "cells/conway/v2/sketch.ts",
-    "description": "Conway's Game of Life with multi-rule support"
-  },
-  {
-    "name": "Particle System",
-    "entry": "old/particle-system/mod.ts",
-    "description": "Interactive particle effects"
-  },
-  {
-    "name": "Sorting Visualizer",
-    "entry": "sorting-vis/mod.ts",
-    "description": "Sorting visualizer"
-  },
-  {
-    "name": "Overtones Visualizer",
-    "entry": "sound/overtones/mod.ts"
-  },
-  {
-    "name": "Forier Transform",
-    "entry": "sound/forier/mod.ts"
+  "sidebar": ["hello", "demo", "life", "boids", "euclidean"],
+  "routes": {
+    "": "hello",
+    "controls-demo": "demo",
+    "boids": "boids",
+    "life": "life",
+    "euclidean": "euclidean"
   }
-]
+}
