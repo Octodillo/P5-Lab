@@ -19,6 +19,11 @@ import Stamps, { GosperGliderGun } from "./stamps.ts";
 import Rules, { Rule } from "../rules.ts";
 import { number2 } from "../../../../common.ts";
 
+const Magic = {
+  autoFitLerpFactor: 0.1,
+  cellPreviewAlpha: 0.65,
+};
+
 const Controller = [
   section("Simulation & View", [
     checkbox("running", "Life", false),
@@ -138,7 +143,7 @@ class GameOfLife extends Sketch<typeof Controller> {
     this.life.stamp([0, 0], GosperGliderGun);
   }
   override update(): void {
-    if (this.controls.values.auto) this.approachTargetFit(this.controls.values.padding, 0.1);
+    if (this.controls.values.auto) this.approachTargetFit(this.controls.values.padding, Magic.autoFitLerpFactor);
     if (!this.controls.values.running) return;
     this.life.update();
     this.controls.set("generation", Number(this.controls.values.generation) + 1 + "");
@@ -158,7 +163,7 @@ class GameOfLife extends Sketch<typeof Controller> {
     const inputPosition = this.mousePosition();
     switch (this.controls.values.input) {
       case "cell":
-        this.drawCell(this.controls.values.rule, inputPosition, { alpha: 0.75 });
+        this.drawCell(this.controls.values.rule, inputPosition, { alpha: Magic.cellPreviewAlpha });
         break;
       case "stamp":
         break;
