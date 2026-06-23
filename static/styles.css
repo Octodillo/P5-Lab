@@ -1,3 +1,29 @@
+:root {
+  --accent: #4338ca;
+
+  --accent-1: #1e1b4b;
+  --accent-3: #312e81;
+  --accent-4: #4338ca;
+  --accent-6: #6366f1;
+  --accent-8: #818cf8;
+  --accent-a: #a5b4fc;
+  --accent-c: #c7d2fe;
+
+  --accent-grey-0: #0f0f10;
+  --accent-grey-1: #18181b;
+  --accent-grey-2: #27272a;
+  --accent-grey-3: #3f3f46;
+  --accent-grey-4: #52525b;
+  --accent-grey-7: #71717a;
+  --accent-grey-a: #a1a1aa;
+  --accent-grey-e: #e4e4e7;
+
+  --grey-0: #0a0a0a;
+  --grey-1: #18181b;
+
+  --column-widths: 15em 20em 1fr;
+}
+
 /* Reset and base styles */
 * {
   margin: 0;
@@ -7,83 +33,56 @@
 
 body {
   margin: 0;
-  background: #0a0a0a;
-  color: #e4e4e7;
+  background: var(--accent-grey-0);
+  color: var(--accent-grey-e);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
   min-height: 100vh;
   overflow: hidden;
-}
 
-/* Three-column layout */
-.app-layout {
-  display: grid;
-  grid-template-columns: 280px 320px 1fr;
-  height: 100vh;
-  background: #0a0a0a;
+  display: flex;
+  flex-direction: row;
+  overflow: clip;
 }
 
 /* Common panel styles */
-.sketch-list,
-.controls-panel {
-  background: #18181b;
-  border-right: 1px solid #27272a;
+aside {
+  background: var(--accent-grey-1);
+  border-right: 1px solid var(--accent-grey-2);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: scroll;
 }
 
-.sketch-list__header,
-.controls-panel__header,
-.sketch-viewport__header {
+aside header {
   padding: 20px;
-  border-bottom: 1px solid #27272a;
-  background: #18181b;
+  border-bottom: 1px solid var(--accent-grey-0);
+  background: var(--accent-grey-1);
 }
 
-.sketch-list__header h2,
-.controls-panel__header h2,
-.sketch-viewport__header h2 {
+aside header h2 {
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #71717a;
+  color: var(--accent-grey-7);
 }
 
-/* Sketch list column */
-.sketch-list__items {
+aside .content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 8px;
 }
 
-.sketch-list__items::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sketch-list__items::-webkit-scrollbar-track {
-  background: #18181b;
-}
-
-.sketch-list__items::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 4px;
-}
-
-.sketch-list__items::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
-}
-
-.sketch-item {
+/* .sketch-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
   margin-bottom: 4px;
-  background: #27272a;
+  background: var(--accent-grey-2);
   border: 1px solid transparent;
   border-radius: 6px;
-  color: #e4e4e7;
+  color: var(--accent-grey-e);
   text-decoration: none;
   font-size: 14px;
   cursor: pointer;
@@ -104,6 +103,7 @@ body {
 
 .sketch-item.active .sketch-icon {
   opacity: 1;
+  color: var(--accent-a);
   filter: brightness(1.2);
 }
 
@@ -115,22 +115,22 @@ body {
 }
 
 .sketch-item:hover {
-  background: #3f3f46;
-  border-color: #52525b;
+  background: var(--accent-grey-3);
+  border-color: var(--accent-grey-5);
 }
 
 .sketch-item.active {
-  background: #3f3f46;
-  border-color: #6366f1;
-  color: #c7d2fe;
-}
+  background: var(--accent-grey-3);
+  border-color: var(--accent-6);
+  color: var(--accent-c);
+} */
 
 .loading,
 .no-sketches,
 .controls-empty {
   padding: 40px 20px;
   text-align: center;
-  color: #71717a;
+  color: var(--accent-grey-7);
   font-size: 13px;
 }
 
@@ -141,27 +141,10 @@ body {
   padding: 16px;
 }
 
-.controls-panel__content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.controls-panel__content::-webkit-scrollbar-track {
-  background: #18181b;
-}
-
-.controls-panel__content::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 4px;
-}
-
-.controls-panel__content::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
-}
-
 /* Global controls at bottom */
 .controls-panel__global {
-  border-top: 2px solid #27272a;
-  background: #0f0f10;
+  border-top: 2px solid var(--accent-grey-2);
+  background: var(--accent-grey-0);
   padding: 12px;
 }
 
@@ -190,10 +173,10 @@ body {
 .global-controls input:not([type="radio"]) {
   width: 100%;
   padding: 8px 10px !important;
-  background: #27272a;
-  border: 1px solid #3f3f46;
+  background: var(--accent-grey-2);
+  border: 1px solid var(--accent-grey-3);
   border-radius: 6px;
-  color: #e4e4e7;
+  color: var(--accent-grey-e);
   font-size: 12px !important;
   font-family: inherit;
   transition: all 0.15s ease;
@@ -205,18 +188,18 @@ body {
 }
 
 .global-controls button:hover {
-  background: #3f3f46;
-  border-color: #52525b;
+  background: var(--accent-grey-3);
+  border-color: var(--accent-grey-5);
 }
 
 .global-controls button:active {
-  background: #52525b;
+  background: var(--accent-grey-5);
 }
 
 .global-controls button.active {
-  background: #4338ca;
-  border-color: #6366f1;
-  color: #c7d2fe;
+  background: var(--accent-4);
+  border-color: var(--accent-6);
+  color: var(--accent-c);
 }
 
 /* Radio buttons in global controls - ensure they flex properly */
@@ -232,8 +215,8 @@ body {
 }
 
 .global-controls input:not([type="radio"]):hover {
-  background: #3f3f46;
-  border-color: #52525b;
+  background: var(--accent-grey-3);
+  border-color: var(--accent-grey-5);
 }
 
 .global-controls .sketch-controls__input-group {
@@ -245,7 +228,7 @@ body {
 
 .global-controls .sketch-controls__input-group span {
   font-size: 10px;
-  color: #71717a;
+  color: var(--accent-grey-7);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -255,7 +238,7 @@ body {
 
 .global-controls .sketch-controls__stat {
   font-size: 11px;
-  color: #71717a;
+  color: var(--accent-grey-7);
   padding: 0;
   font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
 }
@@ -279,13 +262,13 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #71717a;
+  color: var(--accent-grey-7);
   margin-bottom: 4px;
 }
 
 .sketch-controls__divider {
   height: 1px;
-  background: #27272a;
+  background: var(--accent-grey-2);
   margin: 8px 0;
 }
 
@@ -320,10 +303,10 @@ body {
 .sketch-controls input {
   width: 100%;
   padding: 10px 12px;
-  background: #27272a;
-  border: 1px solid #3f3f46;
+  background: var(--accent-grey-2);
+  border: 1px solid var(--accent-grey-3);
   border-radius: 6px;
-  color: #e4e4e7;
+  color: var(--accent-grey-e);
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
@@ -339,31 +322,31 @@ body {
 .sketch-controls button:hover,
 .sketch-controls select:hover,
 .sketch-controls input:hover {
-  background: #3f3f46;
-  border-color: #52525b;
+  background: var(--accent-grey-3);
+  border-color: var(--accent-grey-5);
 }
 
 .sketch-controls button:active {
-  background: #52525b;
+  background: var(--accent-grey-5);
 }
 
 /* Button active state - solid fill indicates "on" */
 .sketch-controls button.active {
-  background: #4338ca;
-  border-color: #6366f1;
-  color: #c7d2fe;
+  background: var(--accent-4);
+  border-color: var(--accent-6);
+  color: var(--accent-c);
 }
 
 .sketch-controls button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: #27272a;
-  border-color: #3f3f46;
+  background: var(--accent-grey-2);
+  border-color: var(--accent-grey-3);
 }
 
 .sketch-controls button:disabled:hover {
-  background: #27272a;
-  border-color: #3f3f46;
+  background: var(--accent-grey-2);
+  border-color: var(--accent-grey-3);
 }
 
 .sketch-controls select {
@@ -387,7 +370,7 @@ body {
 
 .sketch-controls__input-group span {
   font-size: 11px;
-  color: #71717a;
+  color: var(--accent-grey-7);
   font-weight: 500;
   white-space: nowrap;
   display: flex;
@@ -417,7 +400,7 @@ body {
 .sketch-controls label:has(input[type="text"]) > span,
 .sketch-controls label:has(input[type="number"]) > span {
   font-size: 12px;
-  color: #a1a1aa;
+  color: var(--accent-grey-a);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -450,10 +433,10 @@ body {
   justify-content: center;
   width: 100%;
   padding: 10px 12px;
-  background: #27272a;
-  border: 1px solid #3f3f46;
+  background: var(--accent-grey-2);
+  border: 1px solid var(--accent-grey-3);
   border-radius: 6px;
-  color: #e4e4e7;
+  color: var(--accent-grey-e);
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
@@ -463,14 +446,14 @@ body {
 }
 
 .sketch-controls label:has(input[type="checkbox"]):hover {
-  background: #3f3f46;
-  border-color: #52525b;
+  background: var(--accent-grey-3);
+  border-color: var(--accent-grey-5);
 }
 
 /* Checkbox indicator expands slightly on hover */
 .sketch-controls label:has(input[type="checkbox"]):hover::before {
   height: 60%;
-  background: #818cf8;
+  background: var(--accent-8);
 }
 
 /* Hide the native checkbox */
@@ -493,21 +476,21 @@ body {
   width: 3px;
   height: 40%;
   border-radius: 0 2px 2px 0;
-  background: #6366f1;
+  background: var(--accent-6);
   transition: all 0.15s ease;
 }
 
 .sketch-controls label:has(input[type="checkbox"]:checked) {
-  background: #4338ca;
-  border-color: #6366f1;
-  color: #c7d2fe;
+  background: var(--accent-4);
+  border-color: var(--accent-6);
+  color: var(--accent-c);
 }
 
 .sketch-controls label:has(input[type="checkbox"]:checked)::before {
   height: 100%;
   border-radius: 0;
-  background: #a5b4fc;
-  box-shadow: 0 0 8px #6366f1;
+  background: var(--accent-a);
+  box-shadow: 0 0 8px var(--accent-6);
 }
 
 /* ==========================================================================
@@ -521,14 +504,18 @@ body {
   justify-content: center;
   width: 100%;
   padding: 10px 12px;
-  background: #27272a;
-  border: 1px solid #3f3f46;
+  background: var(--accent-grey-2);
+  border: 1px solid var(--accent-grey-3);
   border-radius: 6px;
-  color: #e4e4e7;
+  color: var(--accent-grey-e);
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, outline-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    outline-color 0.15s ease;
   position: relative;
   overflow: hidden;
   outline: 2px solid transparent;
@@ -536,19 +523,19 @@ body {
 }
 
 .sketch-controls label:has(input[type="radio"]):hover {
-  background: #3f3f46;
-  border-color: #52525b;
+  background: var(--accent-grey-3);
+  border-color: var(--accent-grey-5);
 }
 
 /* Radio indicator starts moving on hover */
 .sketch-controls label:has(input[type="radio"]):hover::before {
   top: 15%;
-  background: #818cf8;
+  background: var(--accent-8);
 }
 
 .sketch-controls label:has(input[type="radio"]):hover::after {
   bottom: 15%;
-  background: #818cf8;
+  background: var(--accent-8);
 }
 
 /* Hide the native radio */
@@ -570,7 +557,7 @@ body {
   width: 3px;
   height: 25%;
   border-radius: 0 2px 2px 0;
-  background: #6366f1;
+  background: var(--accent-6);
   transition: all 0.2s ease;
 }
 
@@ -583,30 +570,30 @@ body {
 }
 
 .sketch-controls label:has(input[type="radio"]:checked) {
-  background: #4338ca;
-  border-color: #6366f1;
-  color: #c7d2fe;
+  background: var(--accent-4);
+  border-color: var(--accent-6);
+  color: var(--accent-c);
 }
 
 .sketch-controls label:has(input[type="radio"]:checked)::before {
   top: 20%;
   height: 30%;
   border-radius: 0 2px 0 0;
-  background: #a5b4fc;
-  box-shadow: 0 0 8px #6366f1;
+  background: var(--accent-a);
+  box-shadow: 0 0 8px var(--accent-6);
 }
 
 .sketch-controls label:has(input[type="radio"]:checked)::after {
   bottom: 20%;
   height: 30%;
   border-radius: 0 0 2px 0;
-  background: #a5b4fc;
-  box-shadow: 0 0 8px #6366f1;
+  background: var(--accent-a);
+  box-shadow: 0 0 8px var(--accent-6);
 }
 
 /* Bright outline for sibling radios when hovering any radio in the group */
 .sketch-controls label.radio-group-sibling-hover:has(input[type="radio"]) {
-  outline-color: #818cf8;
+  outline-color: var(--accent-8);
 }
 
 /* When sibling is hovered, the checked radio's indicator bars separate */
@@ -655,14 +642,14 @@ body {
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: #71717a;
+  color: var(--accent-grey-7);
   padding: 8px 0;
   font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
 }
 
 .sketch-controls__stat-label {
   font-size: 12px;
-  color: #a1a1aa;
+  color: var(--accent-grey-a);
   font-weight: 500;
   white-space: nowrap;
   font-family: inherit;
@@ -675,34 +662,51 @@ body {
 
 .sketch-controls__highlight {
   font-size: 12px;
-  color: #a5b4fc;
+  color: var(--accent-a);
   padding: 8px 12px;
-  background: #1e1b4b;
-  border: 1px solid #312e81;
+  background: var(--accent-1);
+  border: 1px solid var(--accent-3);
   border-radius: 6px;
   font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   min-height: 20px;
 }
 
 .sketch-controls__slider-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 10px;
+  column-gap: 10px;
+  row-gap: 0;
   flex: 1;
   min-width: 0;
 }
 
 .sketch-controls__slider-label {
-  font-size: 12px;
-  color: #a1a1aa;
+  font-size: 13px;
+  color: var(--accent-grey-a);
   font-weight: 500;
   white-space: nowrap;
-  /* min-width: 40px; */
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.sketch-controls__slider-value {
+  font-size: 13px;
+  color: var(--accent-grey-a);
+  font-weight: 500;
+  white-space: nowrap;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
 }
 
 .sketch-controls__slider-container input[type="range"] {
-  flex: 1;
+  grid-column: 1 / -1;
+  grid-row: 2;
   min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 2px;
 }
 
 .sketch-controls__rule-fields {
@@ -723,7 +727,7 @@ body {
 
 .sketch-controls__radio-group .sketch-controls__label {
   font-size: 11px;
-  color: #71717a;
+  color: var(--accent-grey-7);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -740,30 +744,30 @@ body {
   gap: 6px;
   cursor: pointer;
   font-size: 13px;
-  color: #a1a1aa;
+  color: var(--accent-grey-a);
   transition: color 0.15s ease;
 }
 
 .sketch-controls__radios label:hover {
-  color: #e4e4e7;
+  color: var(--accent-grey-e);
 }
 
 .sketch-controls__radios input[type="radio"] {
   width: auto;
   cursor: pointer;
   margin: 0;
-  accent-color: #6366f1;
+  accent-color: var(--accent-6);
 }
 
 .sketch-controls__radios input[type="radio"]:checked + span {
-  color: #e4e4e7;
+  color: var(--accent-grey-e);
   font-weight: 500;
 }
 
 .sketch-controls select optgroup {
   font-weight: 600;
   font-size: 11px;
-  color: #71717a;
+  color: var(--accent-grey-7);
 }
 
 .sketch-controls select option {
@@ -773,19 +777,19 @@ body {
 
 /* Sketch viewport column */
 .sketch-viewport {
-  background: #0a0a0a;
+  background: var(--grey-0);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .sketch-viewport__header {
-  background: #0a0a0a;
-  border-bottom: 1px solid #27272a;
+  background: var(--grey-0);
+  border-bottom: 1px solid var(--accent-grey-2);
 }
 
 .sketch-viewport__header h2 {
-  color: #e4e4e7;
+  color: var(--accent-grey-e);
   font-size: 16px;
   font-weight: 500;
   text-transform: none;
@@ -809,12 +813,26 @@ body {
 /* Empty state */
 .sketch-viewport__canvas:empty::after {
   content: "Select a sketch to begin";
-  color: #3f3f46;
+  color: var(--accent-grey-3);
   font-size: 14px;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+/* GitHub link */
+.github-link {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: var(--accent-grey-3);
+  transition: color 0.2s;
+  z-index: 10;
+}
+
+.github-link:hover {
+  color: var(--accent-grey-a);
 }
 
 /* Live reload indicator */
@@ -823,11 +841,11 @@ body {
   bottom: 16px;
   right: 16px;
   padding: 8px 12px;
-  background: #18181b;
-  border: 1px solid #27272a;
+  background: var(--accent-grey-1);
+  border: 1px solid var(--accent-grey-2);
   border-radius: 6px;
   font-size: 11px;
-  color: #71717a;
+  color: var(--accent-grey-7);
   font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   z-index: 1000;
   transition: all 0.2s ease;
