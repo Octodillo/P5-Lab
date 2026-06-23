@@ -178,13 +178,14 @@ export const select = <N extends string, V>(
   options: readonly OptionDesc<V>[],
   selected?: V,
   label?: string,
-): SelectDesc<N, V> => ({
-  type: "select",
-  name,
-  label,
-  options,
-  selected: selected ?? options[0]?.value,
-} as SelectDesc<N, V>);
+): SelectDesc<N, V> =>
+  ({
+    type: "select",
+    name,
+    label,
+    options,
+    selected: selected ?? options[0]?.value,
+  }) as SelectDesc<N, V>;
 
 export const option = <V>(label: string, value: V): OptionDesc<V> => ({ type: "option", value, label });
 
@@ -284,12 +285,18 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
     return this;
   }
 
-  subscribe<K extends string & keyof SchemaValues<S>>(name: K, cb: (value: SchemaValues<S>[K]) => void): () => void {
+  subscribe<K extends string & keyof SchemaValues<S>>(
+    name: K,
+    cb: (value: SchemaValues<S>[K]) => void,
+    now = true,
+  ): () => void {
     if (!this.observers.has(name)) this.observers.set(name, new Set());
     const wrapped = cb as Observer;
-    // fire immediately with current value
-    const cur = this.state.get(name);
-    if (cur !== undefined) wrapped(cur);
+    if (now) {
+      // fire immediately with current value
+      const cur = this.state.get(name);
+      if (cur !== undefined) wrapped(cur);
+    }
     this.observers.get(name)!.add(wrapped);
     return () => this.observers.get(name)?.delete(wrapped);
   }
@@ -495,10 +502,10 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
     btn.textContent = desc.label;
     btn.addEventListener("click", () => this.fromDOM(desc.name, true));
     parent.appendChild(btn);
-    this.register(desc.name, false, {
+    this.register(desc.name, undefined, {
       el: btn,
       desc,
-      get: () => false,
+      get: () => undefined,
       set: () => {},
     });
   }
@@ -557,7 +564,7 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
 
     const key = desc.controlName as string & keyof SchemaValues<S>;
     const cur = this.tryGet(key);
-    show((cur) ?? Object.keys(desc.panels)[0] ?? "");
+    show(cur ?? Object.keys(desc.panels)[0] ?? "");
     this.subscribe(key, show as any);
   }
 }

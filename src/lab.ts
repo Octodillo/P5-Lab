@@ -16,13 +16,15 @@ const Controller = [
 
 export class P5Lab {
   private sketch: Sketch | undefined;
-  public readonly index: SketchIndex = [];
+  private catalog: SketchCatalog | undefined;
+  private currentId: string | undefined;
   public readonly containers = {
     sketch: getElementByIdOrError("sketch-container"),
     index: getElementByIdOrError("sketches-container"),
     controls: getElementByIdOrError("controls-container"),
     globals: getElementByIdOrError("global-controls-container"),
   } as const;
+  public readonly index = new Controls(this.containers.index);
   public readonly controls = new Controls<typeof Controller>(this.containers.globals);
   turboUpdatesPerFrame = 10;
 
@@ -31,11 +33,37 @@ export class P5Lab {
     this.controls.render(Controller);
 
     this.controls.subscribe("step", () => this.sketch?.update());
+
+    globalThis.addEventListener("popstate", () => {
+      const id = this.resolveRoute();
+      if (id !== undefined && id !== this.currentId) this.load(id);
+    });
+  }
+
+  private resolveRoute(): string | undefined {
+    if (!this.catalog) return undefined;
+    const path = location.pathname.slice(1); // strip leading /
+    if (path in this.catalog.sketches) return path;
+    return undefined;
+  }
+
+  load(id: string) {
+    if (!this.catalog) return;
+    const meta = this.catalog.sketches[id];
+    if (!meta) return;
+
+    this.currentId = id;
+    const target = `/${id}`;
+    if (location.pathname !== target) {
+      history.pushState({ sketchId: id }, "", target);
+    }
+
+    return this.request(meta);
   }
 
   request(meta: SketchMeta) {
     const cacheBuster = Date.now();
-    return import(`/src/sketch/${meta.entry}?t=${cacheBuster}`);
+    return import(`/_/sketch/${meta.entry}?t=${cacheBuster}`);
   }
 
   receive(Factory: SketchFactory) {
@@ -60,6 +88,8 @@ export class P5Lab {
           for (let i = 0; i < this.turboUpdatesPerFrame; i++) this.sketch!.update();
         }
 
+        if (!this.sketch!.redraw()) return;
+
         // Wrap in push/pop to hopefully prevent intermittent flickering
         p5.push();
         this.sketch!.draw();
@@ -76,20 +106,18 @@ export class P5Lab {
   }
 
   init = () =>
-    Promise.allSettled([
-      this.request({
-        name: "Hello",
-        entry: "hello.ts",
-      }),
-      this.refreshIndex(),
-    ]);
+    this.refreshIndex().then(() => {
+      const routeId = this.resolveRoute();
+      return this.load(routeId ?? "");
+    });
 
   refreshIndex = () =>
     fetch("/sketches.json")
       .then(r => r.json())
-      .then((index: SketchIndex) => {
-        this.containers.index.innerHTML = "";
-        index.map(sketchSelectButton).forEach(butt => this.containers.index.appendChild(butt));
+      .then((catalog: SketchCatalog) => {
+        this.catalog = catalog;
+        this.index.render(catalog.sidebar.map(id => button(id, catalog.sketches[id].name)));
+        catalog.sidebar.forEach(id => this.index.subscribe(id, () => load(id), false));
       });
 }
 
@@ -117,6 +145,10 @@ export abstract class Sketch<S extends readonly ControlDesc[] = readonly Control
     this.p5.remove();
   }
 
+  redraw() {
+    return true;
+  }
+
   resize() {
     const width = this.lab.containers.sketch.clientWidth;
     const height = this.lab.containers.sketch.clientHeight;
@@ -129,9 +161,13 @@ export interface SketchMeta {
   icon?: string;
   description?: string;
   feature?: boolean;
+  warning?: string;
 }
 
-export type SketchIndex = SketchMeta[];
+export interface SketchCatalog {
+  sketches: Record<string, SketchMeta>;
+  sidebar: string[];
+}
 
 export class LabMouse extends EventEmitter<{
   clicked: [event: MouseEvent];
@@ -177,5 +213,9 @@ export class LabMouse extends EventEmitter<{
 
 type SketchFactory = new (p5: p5, lab: P5Lab) => Sketch;
 
+// deno-lint-ignore no-explicit-any
+export const load = (id: string) => ((globalThis as any).Lab as P5Lab).load(id);
+// deno-lint-ignore no-explicit-any
 export const request = (meta: SketchMeta) => ((globalThis as any).Lab as P5Lab).request(meta);
+// deno-lint-ignore no-explicit-any
 export const receive = (sketch: SketchFactory) => ((globalThis as any).Lab as P5Lab).receive(sketch);

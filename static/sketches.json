@@ -1,38 +1,47 @@
 {
   "sketches": {
-    "hello": {
+    "": {
       "name": "Hello",
       "entry": "hello.ts"
     },
     "demo": {
       "name": "Controls Demo",
-      "entry": "demo-controls-v2/mod.ts",
+      "entry": "demo.ts",
       "description": "Showcase of the declarative controls API",
       "feature": true
     },
     "boids": {
       "name": "Boids",
-      "entry": "boids/mod.ts",
+      "entry": "boids/sketch.ts",
       "description": "Flocking simulation with emergent behavior",
       "warning": "Placeholder"
     },
     "euclidean": {
       "name": "Euclidean Constructions",
-      "entry": "euclidean-construction/mod.ts",
+      "entry": "euclidean-construction/sketch.ts",
       "description": "Compass and straightedge geometric constructions"
     },
     "life": {
       "name": "Game of Life",
       "entry": "cells/conway/v2/sketch.ts",
       "description": "Conway's Game of Life with multi-rule support"
+    },
+    "old/circles": {
+      "name": "Animated Circles",
+      "entry": "old/animated-circles/sketch.ts"
+    },
+    "old/particles": {
+      "name": "Particles",
+      "entry": "old/particle-system/sketch.ts"
+    },
+    "games/minesweeper": {
+      "name": "Minesweeper",
+      "entry": "games/minesweeper/sketch.ts"
+    },
+    "chip8": {
+      "name": "CHIP-8 Emulator",
+      "entry": "emulation/chip8/sketch.ts"
     }
   },
-  "sidebar": ["hello", "demo", "life", "boids", "euclidean"],
-  "routes": {
-    "": "hello",
-    "controls-demo": "demo",
-    "boids": "boids",
-    "life": "life",
-    "euclidean": "euclidean"
-  }
+  "sidebar": ["", "demo", "life", "boids", "euclidean", "games/minesweeper"]
 }

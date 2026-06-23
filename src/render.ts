@@ -1,4 +1,4 @@
-import { request, SketchMeta } from "./lab.ts";
+import { load, SketchMeta } from "./lab.ts";
 
 export const getElementByIdOrError = (id: string) => {
   const element = document.getElementById(id);
@@ -6,7 +6,7 @@ export const getElementByIdOrError = (id: string) => {
   return element;
 };
 
-export function sketchSelectButton(meta: SketchMeta) {
+export function sketchSelectButton(id: string, meta: SketchMeta) {
   const item = document.createElement("div");
   item.className = "sketch-item";
 
@@ -20,6 +20,6 @@ export function sketchSelectButton(meta: SketchMeta) {
   label.textContent = meta.name;
   item.appendChild(label);
 
-  item.onclick = () => request(meta);
+  item.onclick = () => load(id);
   return item;
 }
