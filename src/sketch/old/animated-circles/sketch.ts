@@ -1,6 +1,6 @@
 import { checkbox, divider, numberInput, section, stat } from "../../../controls.ts";
 import { receive, Sketch } from "../../../lab.ts";
-import { Pool } from "../../../util.ts";
+import { Pool } from "../../../common.ts";
 
 interface Circle {
   x: number;
