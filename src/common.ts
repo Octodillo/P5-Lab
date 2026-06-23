@@ -303,5 +303,72 @@ export function zip<T>(...arrays: T[][]): T[][] {
 
 export function cross<T extends unknown[]>(...arrays: { [K in keyof T]: T[K][] }): T[] {
   if (arrays.length === 0) return [[]] as unknown as T[];
-  return arrays.reduce<unknown[][]>((acc, arr) => acc.flatMap(a => (arr as unknown[]).map(b => [...a, b])), [[]]) as T[];
+  return arrays.reduce<unknown[][]>(
+    (acc, arr) => acc.flatMap(a => (arr as unknown[]).map(b => [...a, b])),
+    [[]],
+  ) as T[];
 }
+
+export function shuffle<T>(array: T[]): T[] {
+  let currentIndex = array.length,
+    randomIndex;
+
+  // While there remain elements to shuffle.
+  while (currentIndex != 0) {
+    // Pick a remaining element.
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+}
+
+/**
+ * A managed collection backed by a factory function.
+ * Grows and shrinks to a target count on demand.
+ *
+ * ```ts
+ * const pool = new Pool(() => ({ x: random(), y: random() }));
+ * pool.resize(50);       // spawn 50 items
+ * pool.resize(20);       // remove 30 oldest
+ * pool.forEach(item => { ... });
+ * ```
+ */
+export class Pool<T> implements Iterable<T> {
+  readonly items: T[] = [];
+
+  constructor(private readonly spawn: () => T) {}
+
+  /** Grow or shrink to match `count`. New items are appended; excess items are removed from the front. */
+  resize(count: number): void {
+    const diff = count - this.items.length;
+    if (diff > 0) {
+      for (let i = 0; i < diff; i++) this.items.push(this.spawn());
+    } else if (diff < 0) {
+      this.items.splice(0, -diff);
+    }
+  }
+
+  get length(): number {
+    return this.items.length;
+  }
+
+  forEach(fn: (item: T, index: number) => void): void {
+    this.items.forEach(fn);
+  }
+
+  [Symbol.iterator](): Iterator<T> {
+    return this.items[Symbol.iterator]();
+  }
+}
+
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends Array<infer U>
+    ? Array<DeepPartial<U>>
+    : T[P] extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : DeepPartial<T[P]>;
+};

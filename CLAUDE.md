@@ -64,7 +64,7 @@ Controls support `subscribe(name, callback)` for reactive updates and `set(name,
 
 ### Utilities
 
-- **`src/util.ts`**: `Pool<T>` (managed collection with resize), `TupleMap`/`TupleSet` (N-dimensional coordinate maps/sets), `Map2`/`Set2` (optimized 2D variants), `zip`, `cross`
+- **`src/common.ts`**: `Pool<T>` (managed collection with resize), `TupleMap`/`TupleSet` (N-dimensional coordinate maps/sets), `Map2`/`Set2` (optimized 2D variants), `zip`, `cross`, `shuffle`
 - **`src/decision.ts`**: Lazy evaluation combinators (`decide`, `condition`, `chance`, `choose`, `weighted`, `cycle`, `cases`, `range`, `fallback`, `proxy`) for composable randomized/conditional logic
 - **`src/render.ts`**: DOM helpers for the sketch sidebar
 - **`src/lab.ts`**: Also exports `LabMouse` (EventEmitter wrapper around p5 mouse events)

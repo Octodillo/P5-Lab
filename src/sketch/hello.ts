@@ -1,6 +1,6 @@
 import { slider, section, textInput } from "../controls.ts";
 import { Sketch, receive } from "../lab.ts";
-import { Pool } from "../util.ts";
+import { Pool } from "../common.ts";
 
 interface Particle {
   x: number;
@@ -34,8 +34,6 @@ class Hello extends Sketch<typeof Controller> {
   readonly schema = Controller;
 
   private particles!: Pool<Particle>;
-
-  override remove?(): void {}
 
   override setup(): void {
     const { p5 } = this;
