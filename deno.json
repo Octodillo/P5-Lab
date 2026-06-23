@@ -1,7 +1,7 @@
 {
   "tasks": {
-    "dev": "deno run --allow-net --allow-read --allow-write --allow-env server.ts",
-    "serve": "deno run --allow-net --allow-read --allow-env server.ts"
+    "dev": "deno run --allow-read=./src,./static --allow-net=0.0.0.0:8000 --allow-write --allow-env server.ts",
+    "serve": "deno run --allow-read=./src,./static --allow-net=0.0.0.0:8000 --allow-env server.ts"
   },
   "imports": {
     "events": "https://esm.sh/jsr/@denosaurs/event",

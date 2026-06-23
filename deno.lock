@@ -3,6 +3,8 @@
   "specifiers": {
     "jsr:@deno/cache-dir@0.13.2": "0.13.2",
     "jsr:@deno/emit@0.46.0": "0.46.0",
+    "jsr:@divy/sdl2@*": "0.15.0",
+    "jsr:@divy/sdl2@0.15": "0.15.0",
     "jsr:@std/assert@0.223": "0.223.0",
     "jsr:@std/bytes@0.223": "0.223.0",
     "jsr:@std/fmt@0.223": "0.223.0",
@@ -26,6 +28,9 @@
         "jsr:@deno/cache-dir",
         "jsr:@std/path"
       ]
+    },
+    "@divy/sdl2@0.15.0": {
+      "integrity": "d85d212807604d41a116ce7c86449794168cf8a3a839d74c5083ddd986f679ae"
     },
     "@std/assert@0.223.0": {
       "integrity": "eb8d6d879d76e1cc431205bd346ed4d88dc051c6366365b1af47034b0670be24"

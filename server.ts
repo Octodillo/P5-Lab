@@ -7,28 +7,11 @@ const shrug = new Response("Not found", { status: 404 });
 const squint = new Response("Access denied", { status: 403 });
 const slapAria = new Response("Transpilation failed", { status: 500 });
 
-const wsClients = new Set<WebSocket>();
-const watcher = Deno.watchFs(["./src", "./static"]);
-(async () => {
-  for await (const event of watcher) {
-    if (event.kind === "modify" || event.kind === "create") {
-      console.log(`📝 ${event.paths.join(", ")}`);
-      for (const client of wsClients) {
-        try {
-          client.send(JSON.stringify({ type: "reload" }));
-        } catch {
-          wsClients.delete(client);
-        }
-      }
-    }
-  }
-})();
-
-// deno-lint-ignore ban-types
-const jsonResponse = (object: {}) =>
-  new Response(JSON.stringify(object), {
-    headers: { "content-type": "application/json" },
-  });
+const srcRoot = await Deno.realPath(`${Deno.cwd()}/src`);
+const root = {
+  src: await Deno.realPath(`${Deno.cwd()}/src`),
+  static: await Deno.realPath(`${Deno.cwd()}/static`),
+};
 
 const src = async (path: string[]) => {
   if (path.length === 0 || !path.toReversed()[0].endsWith(".ts")) return squint;
@@ -36,6 +19,8 @@ const src = async (path: string[]) => {
   path.unshift(Deno.cwd(), "src");
   const fullPath = await Deno.realPath(path.join("/"));
   if (!fullPath) return shrug;
+  if (!fullPath.startsWith(srcRoot + "/")) return squint;
+
   const url = new URL(`file://${fullPath}`);
 
   try {
@@ -67,48 +52,17 @@ const src = async (path: string[]) => {
   }
 };
 
-const ws = (req: Request) => {
-  if (req.headers.get("upgrade") !== "websocket") return shrug;
-  const { socket, response } = Deno.upgradeWebSocket(req);
-
-  socket.onopen = () => wsClients.add(socket);
-  socket.onclose = () => wsClients.delete(socket);
-  socket.onerror = () => wsClients.delete(socket);
-
-  return Promise.resolve(response);
-};
-
-const staticHeaders = {
-  "x-content-type-options": "nosniff",
-  "x-frame-options": "SAMEORIGIN",
-  "Cache-Control": "no-cache, no-store, must-revalidate",
-};
-
 const server = Deno.serve({ port: PORT, onListen: () => {} }, (req: Request) => {
   const path = new URL(req.url).pathname;
   console.log(`🍽️\t${path}`);
-  const parts = path.slice(1).split("/");
-  if (parts.includes("..")) return squint;
 
-  switch (parts.shift()) {
-    case "ws":
-      return ws(req);
-    case "src":
-      return src(parts);
-    case "":
-      return serveFile(req, "./static/index.html");
-    default:
-      return serveDir(req, {
-        fsRoot: "static",
-        urlRoot: "",
-        headers: ["Cache-Control: no-cache, no-store, must-revalidate"],
-      });
-  }
+  const parts = path.slice(1).split("/");
+
+  if (parts.includes("..")) return squint;
+  if (parts[0] === "_") return src(parts.slice(1));
+  if (parts.toReversed()[0].includes(".")) return serveFile(req, `./static${path}`);
+  return serveFile(req, "./static/index.html");
 });
 
 console.log(`🎨 Server at ${server.addr.hostname}:${server.addr.port}`);
-console.log(`📁 / → ./static/index.html`);
-console.log(`📁 /... → ./static/...`);
-console.log(`📁 /src/... → ./src/sketches/...`);
-console.log(`📁 /ws → Live reload`);
 console.log("🏳️‍⚧️ Transpiling TypeScript on-the-fly");
