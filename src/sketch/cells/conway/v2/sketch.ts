@@ -35,6 +35,7 @@ class GameOfLife extends Sketch<typeof Controller> {
           break;
         }
         case "stamp":
+          if (button === "left") this.life.stamp(this.mousePosition(), this.controls.values.stampSelect);
           break;
         case "move":
           break;
