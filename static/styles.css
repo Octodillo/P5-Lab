@@ -208,7 +208,6 @@ aside .content {
 
 .global-controls button:hover {
   background: var(--accent-grey-3);
-  border-color: var(--accent-grey-5);
 }
 
 .global-controls button:active {
@@ -235,7 +234,6 @@ aside .content {
 
 .global-controls input:not([type="radio"]):hover {
   background: var(--accent-grey-3);
-  border-color: var(--accent-grey-5);
 }
 
 .global-controls .sketch-controls__input-group {
@@ -349,7 +347,6 @@ aside .content {
 .sketch-controls select:hover,
 .sketch-controls input:hover {
   background: var(--accent-grey-3);
-  border-color: var(--accent-grey-5);
 }
 
 .sketch-controls button:active {
@@ -450,7 +447,9 @@ aside .content {
 
 /* ==========================================================================
    CHECKBOX STYLING
-   Checkbox looks like a button but with a square indicator on the left edge
+   Checkbox looks like a button but with a sliding tick indicator on the left
+   (the "Sliding marker" style from the Controls Style Lab — see
+   src/sketch/controls-style-lab/styles.ts for the full set of candidates)
    ========================================================================== */
 
 .sketch-controls label:has(input[type="checkbox"]) {
@@ -473,12 +472,11 @@ aside .content {
 
 .sketch-controls label:has(input[type="checkbox"]):hover {
   background: var(--accent-grey-3);
-  border-color: var(--accent-grey-5);
 }
 
-/* Checkbox indicator expands slightly on hover */
+/* Checkbox indicator brightens and grows slightly on hover */
 .sketch-controls label:has(input[type="checkbox"]):hover::before {
-  height: 60%;
+  height: 45%;
   background: var(--accent-8);
 }
 
@@ -492,17 +490,17 @@ aside .content {
   padding: 0;
 }
 
-/* Custom checkbox indicator - square notch on left edge */
+/* Custom checkbox indicator - fixed-position tick that grows in place */
 .sketch-controls label:has(input[type="checkbox"])::before {
   content: "";
   position: absolute;
-  left: 0;
+  left: 8px;
   top: 50%;
   transform: translateY(-50%);
-  width: 3px;
-  height: 40%;
-  border-radius: 0 2px 2px 0;
-  background: var(--accent-6);
+  width: 4px;
+  height: 30%;
+  border-radius: 2px;
+  background: var(--accent-grey-7);
   transition: all 0.15s ease;
 }
 
@@ -513,15 +511,15 @@ aside .content {
 }
 
 .sketch-controls label:has(input[type="checkbox"]:checked)::before {
-  height: 100%;
-  border-radius: 0;
+  height: 55%;
   background: var(--accent-a);
   box-shadow: 0 0 8px var(--accent-6);
 }
 
 /* ==========================================================================
    RADIO BUTTON STYLING
-   Radio looks like a button but with a circular indicator on the left edge
+   Radio looks like a button but with a tick indicator that slides inward as
+   it activates ("Sliding marker" style, matches the checkbox tick shape).
    ========================================================================== */
 
 .sketch-controls label:has(input[type="radio"]) {
@@ -544,24 +542,19 @@ aside .content {
     outline-color 0.15s ease;
   position: relative;
   overflow: hidden;
-  outline: 2px solid transparent;
+  outline: 1px solid transparent;
   outline-offset: -1px;
 }
 
 .sketch-controls label:has(input[type="radio"]):hover {
   background: var(--accent-grey-3);
-  border-color: var(--accent-grey-5);
 }
 
-/* Radio indicator starts moving on hover */
+/* Indicator brightens and nudges inward on hover to preview activation */
 .sketch-controls label:has(input[type="radio"]):hover::before {
-  top: 15%;
   background: var(--accent-8);
-}
-
-.sketch-controls label:has(input[type="radio"]):hover::after {
-  bottom: 15%;
-  background: var(--accent-8);
+  transform: translate(-2px, -50%);
+  height: 38%;
 }
 
 /* Hide the native radio */
@@ -574,25 +567,19 @@ aside .content {
   padding: 0;
 }
 
-/* Custom radio indicator - pinch-merge style (two bars slide together) */
-.sketch-controls label:has(input[type="radio"])::before,
-.sketch-controls label:has(input[type="radio"])::after {
+/* Custom radio indicator - a short tick marker that slides inward
+   (translateX) as it activates. */
+.sketch-controls label:has(input[type="radio"])::before {
   content: "";
   position: absolute;
-  left: 0;
-  width: 3px;
-  height: 25%;
-  border-radius: 0 2px 2px 0;
-  background: var(--accent-6);
-  transition: all 0.2s ease;
-}
-
-.sketch-controls label:has(input[type="radio"])::before {
-  top: 5%;
-}
-
-.sketch-controls label:has(input[type="radio"])::after {
-  bottom: 5%;
+  left: 4px;
+  top: 50%;
+  transform: translate(-5px, -50%);
+  width: 4px;
+  height: 30%;
+  border-radius: 2px;
+  background: var(--accent-grey-7);
+  transition: all 0.15s ease;
 }
 
 .sketch-controls label:has(input[type="radio"]:checked) {
@@ -601,36 +588,26 @@ aside .content {
   color: var(--accent-c);
 }
 
+/* Slid fully in: solid tick at rest, like a filled marker */
 .sketch-controls label:has(input[type="radio"]:checked)::before {
-  top: 20%;
-  height: 30%;
-  border-radius: 0 2px 0 0;
+  transform: translate(0, -50%);
+  height: 55%;
   background: var(--accent-a);
   box-shadow: 0 0 8px var(--accent-6);
 }
 
-.sketch-controls label:has(input[type="radio"]:checked)::after {
-  bottom: 20%;
-  height: 30%;
-  border-radius: 0 0 2px 0;
-  background: var(--accent-a);
-  box-shadow: 0 0 8px var(--accent-6);
+/* Off-preview: a selected radio whose sibling is being hovered partially
+   deactivates (the JS in controls.ts broadcasts radio-group-hover). */
+.sketch-controls label.radio-group-hover:has(input[type="radio"]:checked)::before {
+  transform: translate(-3px, -50%);
+  height: 40%;
+  opacity: 0.7;
+  box-shadow: none;
 }
 
 /* Bright outline for sibling radios when hovering any radio in the group */
-.sketch-controls label.radio-group-sibling-hover:has(input[type="radio"]) {
+.sketch-controls label.radio-group-hover:has(input[type="radio"]) {
   outline-color: var(--accent-8);
-}
-
-/* When sibling is hovered, the checked radio's indicator bars separate */
-.sketch-controls label.radio-group-sibling-hover:has(input[type="radio"]:checked)::before {
-  top: 5%;
-  height: 25%;
-}
-
-.sketch-controls label.radio-group-sibling-hover:has(input[type="radio"]:checked)::after {
-  bottom: 5%;
-  height: 25%;
 }
 
 /* ==========================================================================
