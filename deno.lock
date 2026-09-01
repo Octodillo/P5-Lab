@@ -6,6 +6,7 @@
     "jsr:@divy/sdl2@*": "0.15.0",
     "jsr:@divy/sdl2@0.15": "0.15.0",
     "jsr:@std/assert@0.223": "0.223.0",
+    "jsr:@std/assert@0.223.0": "0.223.0",
     "jsr:@std/bytes@0.223": "0.223.0",
     "jsr:@std/fmt@0.223": "0.223.0",
     "jsr:@std/fs@0.223": "0.223.0",
@@ -33,7 +34,10 @@
       "integrity": "d85d212807604d41a116ce7c86449794168cf8a3a839d74c5083ddd986f679ae"
     },
     "@std/assert@0.223.0": {
-      "integrity": "eb8d6d879d76e1cc431205bd346ed4d88dc051c6366365b1af47034b0670be24"
+      "integrity": "eb8d6d879d76e1cc431205bd346ed4d88dc051c6366365b1af47034b0670be24",
+      "dependencies": [
+        "jsr:@std/fmt"
+      ]
     },
     "@std/bytes@0.223.0": {
       "integrity": "84b75052cd8680942c397c2631318772b295019098f40aac5c36cead4cba51a8"
@@ -47,14 +51,14 @@
     "@std/io@0.223.0": {
       "integrity": "2d8c3c2ab3a515619b90da2c6ff5ea7b75a94383259ef4d02116b228393f84f1",
       "dependencies": [
-        "jsr:@std/assert",
+        "jsr:@std/assert@0.223",
         "jsr:@std/bytes"
       ]
     },
     "@std/path@0.223.0": {
       "integrity": "593963402d7e6597f5a6e620931661053572c982fc014000459edc1f93cc3989",
       "dependencies": [
-        "jsr:@std/assert"
+        "jsr:@std/assert@0.223"
       ]
     }
   },
