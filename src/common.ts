@@ -340,13 +340,20 @@ export function shuffle<T>(array: T[]): T[] {
 export class Pool<T> implements Iterable<T> {
   readonly items: T[] = [];
 
-  constructor(private readonly spawn: () => T) {}
+  constructor(
+    private readonly spawn: () => T,
+    private readonly setup?: (spawned: T) => void,
+  ) {}
 
   /** Grow or shrink to match `count`. New items are appended; excess items are removed from the front. */
   resize(count: number): void {
     const diff = count - this.items.length;
     if (diff > 0) {
-      for (let i = 0; i < diff; i++) this.items.push(this.spawn());
+      for (let i = 0; i < diff; i++) {
+        const spawned = this.spawn();
+        this.setup?.(spawned);
+        this.items.push(spawned);
+      }
     } else if (diff < 0) {
       this.items.splice(0, -diff);
     }
