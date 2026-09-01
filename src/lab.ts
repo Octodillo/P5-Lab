@@ -1,7 +1,21 @@
 import p5 from "p5";
 import { EventEmitter } from "events";
-import { button, type ControlDesc, Controls, numberInput, radio, row, stat } from "./controls.ts";
-import { getElementByIdOrError, sketchSelectButton } from "./render.ts";
+import {
+  button,
+  type ControlDesc,
+  Controls,
+  numberInput,
+  radio,
+  type RadioDesc,
+  row,
+  stat,
+} from "./controls.ts";
+
+export const getElementByIdOrError = (id: string) => {
+  const element = document.getElementById(id);
+  if (!element) throw new Error(`No ${id}!?`);
+  return element;
+};
 
 const Controller = [
   row([
@@ -24,7 +38,7 @@ export class P5Lab {
     controls: getElementByIdOrError("controls-container"),
     globals: getElementByIdOrError("global-controls-container"),
   } as const;
-  public readonly index = new Controls(this.containers.index);
+  public readonly index = new Controls<[RadioDesc<"sketch", string>]>(this.containers.index);
   public readonly controls = new Controls<typeof Controller>(this.containers.globals);
   turboUpdatesPerFrame = 10;
 
@@ -33,6 +47,7 @@ export class P5Lab {
     this.controls.render(Controller);
 
     this.controls.subscribe("step", () => this.sketch?.update());
+    this.controls.subscribe("reload", () => this.reload());
 
     globalThis.addEventListener("popstate", () => {
       const id = this.resolveRoute();
@@ -47,12 +62,23 @@ export class P5Lab {
     return undefined;
   }
 
+  /** Check the index radio matching the active sketch (without firing load). */
+  private syncIndexSelection(id: string) {
+    const inputs = this.containers.index.querySelectorAll<HTMLInputElement>(
+      'input[name="radio-sketch"]',
+    );
+    inputs.forEach((input) => {
+      input.checked = input.value === id;
+    });
+  }
+
   load(id: string) {
     if (!this.catalog) return;
     const meta = this.catalog.sketches[id];
     if (!meta) return;
 
     this.currentId = id;
+    this.syncIndexSelection(id);
     const target = `/${id}`;
     if (location.pathname !== target) {
       history.pushState({ sketchId: id }, "", target);
@@ -66,10 +92,16 @@ export class P5Lab {
     return import(`/_/sketch/${meta.entry}?t=${cacheBuster}`);
   }
 
+  /** Re-import the active sketch module and restart it from scratch. */
+  reload() {
+    if (this.currentId === undefined) return;
+    return this.load(this.currentId);
+  }
+
   receive(Factory: SketchFactory) {
     this.remove();
 
-    new p5(p5 => {
+    new p5((p5) => {
       p5.setup = () => {
         const width = this.containers.sketch.clientWidth;
         const height = this.containers.sketch.clientHeight;
@@ -113,11 +145,15 @@ export class P5Lab {
 
   refreshIndex = () =>
     fetch("/sketches.json")
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((catalog: SketchCatalog) => {
         this.catalog = catalog;
-        this.index.render(catalog.sidebar.map(id => button(id, catalog.sketches[id].name)));
-        catalog.sidebar.forEach(id => this.index.subscribe(id, () => load(id), false));
+        this.index.render(
+          catalog.sidebar.map((id) =>
+            radio("sketch", id, catalog.sketches[id].name, id === this.currentId)
+          ),
+        );
+        this.index.subscribe("sketch", (id) => load(id), false);
       });
 }
 
@@ -214,8 +250,8 @@ export class LabMouse extends EventEmitter<{
 type SketchFactory = new (p5: p5, lab: P5Lab) => Sketch;
 
 // deno-lint-ignore no-explicit-any
-export const load = (id: string) => ((globalThis as any).Lab as P5Lab).load(id);
-// deno-lint-ignore no-explicit-any
-export const request = (meta: SketchMeta) => ((globalThis as any).Lab as P5Lab).request(meta);
-// deno-lint-ignore no-explicit-any
-export const receive = (sketch: SketchFactory) => ((globalThis as any).Lab as P5Lab).receive(sketch);
+const lab = () => (globalThis as any).Lab as P5Lab;
+
+export const load = (id: string) => lab().load(id);
+export const request = (meta: SketchMeta) => lab().request(meta);
+export const receive = (sketch: SketchFactory) => lab().receive(sketch);
