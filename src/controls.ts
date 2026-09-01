@@ -37,7 +37,11 @@ export type SelectDesc<N extends string = string, V = unknown> = {
   readonly selected: V;
 };
 
-export type OptionDesc<V = string> = { readonly type: "option"; readonly value: V; readonly label: string };
+export type OptionDesc<V = string> = {
+  readonly type: "option";
+  readonly value: V;
+  readonly label: string;
+};
 
 export type StatDesc<N extends string = string> = {
   readonly type: "stat";
@@ -114,28 +118,19 @@ export type ControlDesc = SectionDesc | RowDesc | InputDesc | DividerDesc | Tabs
 // =============================================================================
 
 /** The TS value type for a given input descriptor */
-type ValueOf<D extends InputDesc> = D extends SliderDesc | NumberInputDesc
-  ? number
-  : D extends CheckboxDesc
-    ? boolean
-    : D extends ButtonDesc
-      ? true
-      : D extends RadioDesc<string, infer V>
-        ? V
-        : D extends SelectDesc<string, infer V>
-          ? V
-          : string;
+type ValueOf<D extends InputDesc> = D extends SliderDesc | NumberInputDesc ? number
+  : D extends CheckboxDesc ? boolean
+  : D extends ButtonDesc ? true
+  : D extends RadioDesc<string, infer V> ? V
+  : D extends SelectDesc<string, infer V> ? V
+  : string;
 
 /** Recursively collect all InputDescs from a descriptor tree */
-type FlatInputs<T> = T extends InputDesc
-  ? T
-  : T extends RowDesc
-    ? FlatInputs<T["inputs"][number]>
-    : T extends SectionDesc
-      ? FlatInputs<T["controls"][number]>
-      : T extends TabsDesc
-        ? FlatInputs<T["panels"][keyof T["panels"]][number]>
-        : never;
+type FlatInputs<T> = T extends InputDesc ? T
+  : T extends RowDesc ? FlatInputs<T["inputs"][number]>
+  : T extends SectionDesc ? FlatInputs<T["controls"][number]>
+  : T extends TabsDesc ? FlatInputs<T["panels"][keyof T["panels"]][number]>
+  : never;
 
 /** Map from control name → value type for a schema */
 export type SchemaValues<S extends readonly ControlDesc[]> = {
@@ -161,8 +156,11 @@ export const radio = <N extends string, V extends string | number>(
   selected = false,
 ): RadioDesc<N, V> => ({ type: "radio", name, value, label, selected }) as const;
 
-export const checkbox = <N extends string>(name: N, label: string, checked = false): CheckboxDesc<N> =>
-  ({ type: "checkbox", name, label, checked }) as const;
+export const checkbox = <N extends string>(
+  name: N,
+  label: string,
+  checked = false,
+): CheckboxDesc<N> => ({ type: "checkbox", name, label, checked }) as const;
 
 export const slider = <N extends string>(
   name: N,
@@ -173,7 +171,7 @@ export const slider = <N extends string>(
   label?: string,
 ): SliderDesc<N> => ({ type: "slider", name, label, min, max, value, step }) as const;
 
-export const select = <N extends string, V>(
+export const select = <N extends string, const V>(
   name: N,
   options: readonly OptionDesc<V>[],
   selected?: V,
@@ -187,7 +185,11 @@ export const select = <N extends string, V>(
     selected: selected ?? options[0]?.value,
   }) as SelectDesc<N, V>;
 
-export const option = <V>(label: string, value: V): OptionDesc<V> => ({ type: "option", value, label });
+export const option = <const V>(label: string, value: V): OptionDesc<V> => ({
+  type: "option",
+  value,
+  label,
+});
 
 export const stat = <N extends string>(name: N, value = "", label?: string): StatDesc<N> => ({
   type: "stat",
@@ -218,7 +220,9 @@ export const numberInput = <N extends string>(
 
 export const divider = (): DividerDesc => ({ type: "divider" });
 
-export const tabs = <const P extends Record<string, readonly (RowDesc | InputDesc | DividerDesc)[]>>(
+export const tabs = <
+  const P extends Record<string, readonly (RowDesc | InputDesc | DividerDesc)[]>,
+>(
   controlName: string,
   panels: P,
 ): TabsDesc<P> => ({ type: "tabs", controlName, panels }) as TabsDesc<P>;
@@ -228,7 +232,12 @@ export const tabs = <const P extends Record<string, readonly (RowDesc | InputDes
 // =============================================================================
 
 type Observer = (value: ControlValue) => void;
-type LiveEntry = { el: HTMLElement; get(): ControlValue; set(v: ControlValue): void; desc: InputDesc };
+type LiveEntry = {
+  el: HTMLElement;
+  get(): ControlValue;
+  set(v: ControlValue): void;
+  desc: InputDesc;
+};
 
 /** Allows `controls.name` as shorthand for `controls.get(name)` and destructuring. */
 export interface Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]> {
@@ -324,7 +333,7 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
   // --- private -------------------------------------------------------------
 
   private notify(name: string, value: ControlValue) {
-    this.observers.get(name)?.forEach(cb => cb(value));
+    this.observers.get(name)?.forEach((cb) => cb(value));
   }
 
   private register(name: string, value: ControlValue, entry: LiveEntry) {
@@ -394,7 +403,7 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
         el: label,
         desc: desc as InputDesc,
         get: () => desc.value,
-        set: v => {
+        set: (v) => {
           input.checked = v === desc.value;
         },
       });
@@ -412,7 +421,7 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
       el: label,
       desc,
       get: () => input.checked,
-      set: v => {
+      set: (v) => {
         input.checked = Boolean(v);
       },
     });
@@ -442,7 +451,7 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
       el: container,
       desc,
       get: () => Number(input.value),
-      set: v => {
+      set: (v) => {
         input.value = String(v);
         val.textContent = String(v);
       },
@@ -451,7 +460,7 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
 
   private buildSelect(desc: SelectDesc, parent: HTMLElement) {
     const selectEl = document.createElement("select");
-    const selectedIdx = desc.options.findIndex(o => o.value === desc.selected);
+    const selectedIdx = desc.options.findIndex((o) => o.value === desc.selected);
     for (let i = 0; i < desc.options.length; i++) {
       const o = document.createElement("option");
       o.value = String(i);
@@ -469,8 +478,8 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
       el: wrapper,
       desc: desc as InputDesc,
       get: () => desc.options[Number(selectEl.value)].value,
-      set: v => {
-        const idx = desc.options.findIndex(o => o.value === v);
+      set: (v) => {
+        const idx = desc.options.findIndex((o) => o.value === v);
         if (idx >= 0) selectEl.value = String(idx);
       },
     });
@@ -491,7 +500,7 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
       el: valEl,
       desc,
       get: () => valEl.textContent ?? "",
-      set: v => {
+      set: (v) => {
         valEl.textContent = String(v);
       },
     });
@@ -521,7 +530,7 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
       el: wrapper,
       desc,
       get: () => input.value,
-      set: v => {
+      set: (v) => {
         input.value = String(v);
       },
     });
@@ -538,7 +547,7 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
       el: wrapper,
       desc,
       get: () => Number(input.value),
-      set: v => {
+      set: (v) => {
         input.value = String(v);
       },
     });
@@ -599,12 +608,12 @@ function labelWrap(text: string, child: HTMLElement): HTMLLabelElement {
 
 function addRadioHover(label: HTMLElement, groupId: string) {
   label.addEventListener("mouseenter", () => {
-    document.querySelectorAll(`label[data-radio-group="${groupId}"]`).forEach(s => {
+    document.querySelectorAll(`label[data-radio-group="${groupId}"]`).forEach((s) => {
       if (s !== label) s.classList.add("radio-group-hover");
     });
   });
   label.addEventListener("mouseleave", () => {
-    document.querySelectorAll(`label[data-radio-group="${groupId}"]`).forEach(s => {
+    document.querySelectorAll(`label[data-radio-group="${groupId}"]`).forEach((s) => {
       s.classList.remove("radio-group-hover");
     });
   });
