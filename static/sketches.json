@@ -10,9 +10,20 @@
       "description": "Showcase of the declarative controls API",
       "feature": true
     },
+    "controls-style-lab": {
+      "name": "Controls Style Lab",
+      "entry": "controls-style-lab/sketch.ts",
+      "description": "Side-by-side radio/checkbox indicator style candidates"
+    },
     "boids": {
       "name": "Boids",
       "entry": "boids/sketch.ts",
+      "description": "Flocking simulation with emergent behavior",
+      "warning": "Placeholder"
+    },
+    "boids2": {
+      "name": "Boids v2",
+      "entry": "boids/v2/sketch.ts",
       "description": "Flocking simulation with emergent behavior",
       "warning": "Placeholder"
     },
@@ -41,7 +52,11 @@
     "chip8": {
       "name": "CHIP-8 Emulator",
       "entry": "emulation/chip8/sketch.ts"
+    },
+    "sorting": {
+      "name": "Sorting Visualizer",
+      "entry": "sorting/sketch.ts"
     }
   },
-  "sidebar": ["", "demo", "life", "boids", "euclidean", "games/minesweeper"]
+  "sidebar": ["", "demo", "controls-style-lab", "life", "boids", "boids2", "euclidean", "games/minesweeper", "sorting"]
 }
