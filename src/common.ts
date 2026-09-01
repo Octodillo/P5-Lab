@@ -372,6 +372,172 @@ export class Pool<T> implements Iterable<T> {
   }
 }
 
+/**
+ * A mutable 2D vector, chainable like `p5.Vector` but with no p5 dependency.
+ *
+ * Boids (and anything else doing vector math) need this because pulling in
+ * `p5.Vector` drags in all of p5, which only runs in a browser — making the
+ * math untestable and unrunnable outside one. `Vec2` is plain arithmetic, so
+ * it works in Deno tests, Node, or anywhere else.
+ *
+ * Mutating methods (`add`, `sub`, `mult`, `div`, `normalize`, `setMag`, `set`,
+ * `limit`, `rotate`) return `this` for chaining, mirroring `p5.Vector`'s
+ * mutate-and-return-self convention. Use `.copy()` first if you need to keep
+ * the original.
+ *
+ * ```ts
+ * const v = new Vec2(3, 4).normalize().mult(2);
+ * const sum = Vec2.add(a, b); // non-mutating static form
+ * ```
+ */
+export class Vec2 {
+  constructor(
+    public x = 0,
+    public y = 0,
+  ) {}
+
+  copy(): Vec2 {
+    return new Vec2(this.x, this.y);
+  }
+
+  set(x: number, y: number): this;
+  set(v: Vec2): this;
+  set(xOrV: number | Vec2, y?: number): this {
+    if (xOrV instanceof Vec2) {
+      this.x = xOrV.x;
+      this.y = xOrV.y;
+    } else {
+      this.x = xOrV;
+      this.y = y ?? 0;
+    }
+    return this;
+  }
+
+  add(v: Vec2): this;
+  add(x: number, y: number): this;
+  add(xOrV: number | Vec2, y?: number): this {
+    if (xOrV instanceof Vec2) {
+      this.x += xOrV.x;
+      this.y += xOrV.y;
+    } else {
+      this.x += xOrV;
+      this.y += y ?? 0;
+    }
+    return this;
+  }
+
+  sub(v: Vec2): this;
+  sub(x: number, y: number): this;
+  sub(xOrV: number | Vec2, y?: number): this {
+    if (xOrV instanceof Vec2) {
+      this.x -= xOrV.x;
+      this.y -= xOrV.y;
+    } else {
+      this.x -= xOrV;
+      this.y -= y ?? 0;
+    }
+    return this;
+  }
+
+  mult(scalar: number): this {
+    this.x *= scalar;
+    this.y *= scalar;
+    return this;
+  }
+
+  div(scalar: number): this {
+    this.x /= scalar;
+    this.y /= scalar;
+    return this;
+  }
+
+  mag(): number {
+    return Math.sqrt(this.magSq());
+  }
+
+  magSq(): number {
+    return this.x * this.x + this.y * this.y;
+  }
+
+  /** Unit vector in the same direction. Leaves a zero-length vector at (0, 0). */
+  normalize(): this {
+    const m = this.mag();
+    if (m > 1e-12) this.div(m);
+    return this;
+  }
+
+  /** Clamp magnitude to at most `max`, preserving direction. */
+  limit(max: number): this {
+    if (this.magSq() > max * max) this.normalize().mult(max);
+    return this;
+  }
+
+  /** Set magnitude while preserving direction. */
+  setMag(mag: number): this {
+    return this.normalize().mult(mag);
+  }
+
+  /** Heading angle in radians, matching `p5.Vector.heading()` (atan2(y, x)). */
+  heading(): number {
+    return Math.atan2(this.y, this.x);
+  }
+
+  /** Rotate in place by `angle` radians. */
+  rotate(angle: number): this {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const { x, y } = this;
+    this.x = x * cos - y * sin;
+    this.y = x * sin + y * cos;
+    return this;
+  }
+
+  dot(v: Vec2): number {
+    return this.x * v.x + this.y * v.y;
+  }
+
+  /** Z-component of the 3D cross product; sign gives turn direction. */
+  cross(v: Vec2): number {
+    return this.x * v.y - this.y * v.x;
+  }
+
+  dist(v: Vec2): number {
+    return Math.hypot(this.x - v.x, this.y - v.y);
+  }
+
+  equals(v: Vec2): boolean {
+    return this.x === v.x && this.y === v.y;
+  }
+
+  toString(): string {
+    return `Vec2(${this.x}, ${this.y})`;
+  }
+
+  static zero(): Vec2 {
+    return new Vec2(0, 0);
+  }
+
+  static fromAngle(angle: number, length = 1): Vec2 {
+    return new Vec2(Math.cos(angle) * length, Math.sin(angle) * length);
+  }
+
+  static add(a: Vec2, b: Vec2): Vec2 {
+    return a.copy().add(b);
+  }
+
+  static sub(a: Vec2, b: Vec2): Vec2 {
+    return a.copy().sub(b);
+  }
+
+  static mult(v: Vec2, scalar: number): Vec2 {
+    return v.copy().mult(scalar);
+  }
+
+  static div(v: Vec2, scalar: number): Vec2 {
+    return v.copy().div(scalar);
+  }
+}
+
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends Array<infer U>
     ? Array<DeepPartial<U>>
