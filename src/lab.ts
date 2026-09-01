@@ -1,15 +1,6 @@
 import p5 from "p5";
 import { EventEmitter } from "events";
-import {
-  button,
-  type ControlDesc,
-  Controls,
-  numberInput,
-  radio,
-  type RadioDesc,
-  row,
-  stat,
-} from "./controls.ts";
+import { button, type ControlDesc, Controls, numberInput, radio, type RadioDesc, row, stat } from "./controls.ts";
 
 export const getElementByIdOrError = (id: string) => {
   const element = document.getElementById(id);
@@ -64,10 +55,8 @@ export class P5Lab {
 
   /** Check the index radio matching the active sketch (without firing load). */
   private syncIndexSelection(id: string) {
-    const inputs = this.containers.index.querySelectorAll<HTMLInputElement>(
-      'input[name="radio-sketch"]',
-    );
-    inputs.forEach((input) => {
+    const inputs = this.containers.index.querySelectorAll<HTMLInputElement>('input[name="radio-sketch"]');
+    inputs.forEach(input => {
       input.checked = input.value === id;
     });
   }
@@ -101,38 +90,60 @@ export class P5Lab {
   receive(Factory: SketchFactory) {
     this.remove();
 
-    new p5((p5) => {
+    new p5(p5 => {
+      // The sketch this p5 instance owns. `this.sketch` must not be used
+      // inside these callbacks: `p5.remove()` does not cancel an already
+      // queued animation frame, so a torn-down instance can tick once more
+      // after the next sketch has been installed — and would then drive the
+      // *new* sketch. Capturing the instance keeps each loop to its own.
+      let own: Sketch | undefined;
+
       p5.setup = () => {
         const width = this.containers.sketch.clientWidth;
         const height = this.containers.sketch.clientHeight;
         p5.createCanvas(width, height);
 
-        this.sketch = new Factory(p5, this);
-        this.sketch.controls.render(this.sketch.schema);
-        this.sketch.setup?.();
+        own = new Factory(p5, this);
+        this.sketch = own;
+        own.controls.render(own.schema);
+        own.setup?.();
       };
 
       p5.draw = () => {
+        // Stale frame from a removed instance — drop it.
+        if (!own || own !== this.sketch) return;
+
         const mode = this.controls.values.updateMode;
         if (mode === "play") {
-          this.sketch!.update();
+          own.update();
         } else if (mode === "turbo") {
-          for (let i = 0; i < this.turboUpdatesPerFrame; i++) this.sketch!.update();
+          for (let i = 0; i < this.turboUpdatesPerFrame; i++) own.update();
         }
 
-        if (!this.sketch!.redraw()) return;
+        if (!own.redraw()) return;
 
         // Wrap in push/pop to hopefully prevent intermittent flickering
         p5.push();
-        this.sketch!.draw();
+        own.draw();
         p5.pop();
       };
     }, this.containers.sketch);
   }
 
   remove() {
-    this.sketch?.remove?.();
+    const previous = this.sketch;
+    // Clear the reference first: `draw` bails when its instance is no longer
+    // the active one, so a queued frame cannot tick during teardown. Doing it
+    // before `remove()` also means a throwing sketch still gets unloaded
+    // rather than being left running over a detached canvas.
     this.sketch = undefined;
+
+    try {
+      previous?.remove?.();
+    } catch (error) {
+      console.error("Sketch teardown failed; unloading anyway.", error);
+    }
+
     this.containers.sketch.innerHTML = "";
     this.containers.controls.innerHTML = "";
   }
@@ -145,15 +156,13 @@ export class P5Lab {
 
   refreshIndex = () =>
     fetch("/sketches.json")
-      .then((r) => r.json())
+      .then(r => r.json())
       .then((catalog: SketchCatalog) => {
         this.catalog = catalog;
         this.index.render(
-          catalog.sidebar.map((id) =>
-            radio("sketch", id, catalog.sketches[id].name, id === this.currentId)
-          ),
+          catalog.sidebar.map(id => radio("sketch", id, catalog.sketches[id].name, id === this.currentId)),
         );
-        this.index.subscribe("sketch", (id) => load(id), false);
+        this.index.subscribe("sketch", id => load(id), false);
       });
 }
 
@@ -172,12 +181,25 @@ export abstract class Sketch<S extends readonly ControlDesc[] = readonly Control
     this.resizeObserver.observe(this.lab.containers.sketch);
   }
 
+  /**
+   * Mouse events as an emitter, so several behaviors can listen at once —
+   * p5's `mousePressed`/`mouseDragged`/etc. are single assignable slots, and
+   * the last writer silently wins. Constructed on first access; disposed with
+   * the p5 instance in `remove()`.
+   */
+  private _mouse?: LabMouse;
+  protected get mouse(): LabMouse {
+    return (this._mouse ??= new LabMouse(this.p5));
+  }
+
   setup?(): void;
   abstract update(): void;
   abstract draw(): void;
 
   remove() {
     this.resizeObserver.disconnect();
+    this._mouse?.dispose();
+    this._mouse = undefined;
     this.p5.remove();
   }
 
@@ -221,6 +243,23 @@ export class LabMouse extends EventEmitter<{
     sketch.mousePressed = (event: MouseEvent) => this.emit("pressed", event);
     sketch.mouseReleased = (event: MouseEvent) => this.emit("released", event);
     sketch.mouseWheel = (event: WheelEvent) => this.emit("wheel", event);
+  }
+
+  /**
+   * Drop the listeners *and* the handler slots claimed on the p5 instance.
+   * Clearing only the listeners would leave those closures in place, and each
+   * one captures this emitter — keeping the whole sketch reachable after it
+   * should have been torn down.
+   */
+  dispose() {
+    // this.removeAllListeners();
+    const noop = () => {};
+    this.sketch.mouseClicked = noop;
+    this.sketch.mouseDragged = noop;
+    this.sketch.mouseMoved = noop;
+    this.sketch.mousePressed = noop;
+    this.sketch.mouseReleased = noop;
+    this.sketch.mouseWheel = noop;
   }
 
   get button() {
