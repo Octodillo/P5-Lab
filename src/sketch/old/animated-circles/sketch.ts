@@ -41,13 +41,14 @@ class AnimatedCircles extends Sketch<typeof Controller> {
       phase: p5.random(p5.TWO_PI),
     }));
 
-    this.controls.subscribe("circleCount", count => this.circles.resize(count));
+    this.controls.subscribe("circleCount", (count) => this.circles.resize(count));
 
     p5.mousePressed = () => {
       if (p5.mouseX < 0 || p5.mouseX > p5.width || p5.mouseY < 0 || p5.mouseY > p5.height) return;
       this.controls.set("circleCount", this.controls.values.circleCount + 1);
-      if (this.circles.length > this.controls.values.maxCircles)
+      if (this.circles.length > this.controls.values.maxCircles) {
         this.controls.set("circleCount", this.controls.values.maxCircles);
+      }
     };
   }
 
@@ -64,7 +65,7 @@ class AnimatedCircles extends Sketch<typeof Controller> {
     this.controls.set("activeCircles", `Active circles: ${this.circles.length}`);
 
     // Update and draw circles
-    this.circles.forEach(circle => {
+    this.circles.forEach((circle) => {
       // Animate position
       circle.x += circle.speedX;
       circle.y += circle.speedY;
@@ -94,7 +95,12 @@ class AnimatedCircles extends Sketch<typeof Controller> {
       // Outer glow
       for (let r = pulsatingRadius + 30; r > 0; r -= 5) {
         const alpha = p5.map(r, 0, pulsatingRadius + 30, 40, 0);
-        p5.fill(p5.hue(circle.color), p5.saturation(circle.color), p5.brightness(circle.color), alpha);
+        p5.fill(
+          p5.hue(circle.color),
+          p5.saturation(circle.color),
+          p5.brightness(circle.color),
+          alpha,
+        );
         p5.noStroke();
         p5.ellipse(0, 0, r * 2);
       }
@@ -124,7 +130,7 @@ class AnimatedCircles extends Sketch<typeof Controller> {
       p5.strokeWeight(2);
       p5.noFill();
 
-      this.circles.forEach(circle => {
+      this.circles.forEach((circle) => {
         const distance = p5.dist(p5.mouseX, p5.mouseY, circle.x, circle.y);
         if (distance < 150) {
           p5.line(p5.mouseX, p5.mouseY, circle.x, circle.y);

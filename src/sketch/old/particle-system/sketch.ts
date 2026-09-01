@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { section, divider, numberInput, button, stat, checkbox } from "../../../controls.ts";
+import { button, checkbox, divider, numberInput, section, stat } from "../../../controls.ts";
 import { receive, Sketch } from "../../../lab.ts";
 import { cross } from "../../../common.ts";
 
@@ -35,7 +35,9 @@ const Controller = [
   divider(),
   section("Stats", [stat("particleCount", ""), stat("attractorCount", "")]),
   divider(),
-  section("Info", [stat("instructions", "Drag: Move emitter<br>Click: Add attractor<br>Right click: Add repulsor")]),
+  section("Info", [
+    stat("instructions", "Drag: Move emitter<br>Click: Add attractor<br>Right click: Add repulsor"),
+  ]),
 ];
 
 class ParticleSystem extends Sketch<typeof Controller> {
@@ -87,7 +89,7 @@ class ParticleSystem extends Sketch<typeof Controller> {
       }
     };
 
-    document.addEventListener("contextmenu", e => e.preventDefault());
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
   override update(): void {
@@ -95,15 +97,20 @@ class ParticleSystem extends Sketch<typeof Controller> {
 
     // Spawn new particles
     this.particles.push(
-      ...Array.from({ length: Math.min(maxParticles - Number(particleCount), emissionRate) }, _ => ({
-        position: this.emitter.copy(),
-        velocity: p5.Vector.fromAngle(this.p5.random(this.p5.TWO_PI)).mult(this.p5.random(0.5, 2)),
-        acceleration: this.p5.createVector(0, 0),
-        life: this.p5.random(100, 200),
-        maxLife: 200,
-        size: this.p5.random(2, 8),
-        color: this.p5.color(this.p5.random(180, 300), 80, 90, 80),
-      })),
+      ...Array.from(
+        { length: Math.min(maxParticles - Number(particleCount), emissionRate) },
+        (_) => ({
+          position: this.emitter.copy(),
+          velocity: p5.Vector.fromAngle(this.p5.random(this.p5.TWO_PI)).mult(
+            this.p5.random(0.5, 2),
+          ),
+          acceleration: this.p5.createVector(0, 0),
+          life: this.p5.random(100, 200),
+          maxLife: 200,
+          size: this.p5.random(2, 8),
+          color: this.p5.color(this.p5.random(180, 300), 80, 90, 80),
+        }),
+      ),
     );
 
     // Apply each attractor to each particle
@@ -119,20 +126,20 @@ class ParticleSystem extends Sketch<typeof Controller> {
       }
     });
 
-    this.particles.forEach(particle => {
+    this.particles.forEach((particle) => {
       particle.velocity.add(particle.acceleration);
       particle.velocity.limit(4);
       particle.position.add(particle.velocity);
     });
 
-    this.particles = this.particles.filter(particle => particle.life-- > 0);
+    this.particles = this.particles.filter((particle) => particle.life-- > 0);
   }
 
   override draw(): void {
     const { showTrails } = this.controls.values;
     this.p5.background(240, 20, 5, showTrails ? 15 : 100);
 
-    this.attractors.forEach(attractor => {
+    this.attractors.forEach((attractor) => {
       // Attractor field visualization
       this.p5.noFill();
       this.p5.stroke(attractor.strength > 0 ? 120 : 0, 60, 60, 30);
@@ -164,7 +171,7 @@ class ParticleSystem extends Sketch<typeof Controller> {
     this.p5.noStroke();
     this.p5.ellipse(this.emitter.x, this.emitter.y, 8);
 
-    this.particles.forEach(particle => {
+    this.particles.forEach((particle) => {
       this.p5.push();
 
       // Calculate alpha based on life remaining

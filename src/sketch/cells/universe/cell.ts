@@ -1,5 +1,5 @@
 import { Coordinate } from "../../common.ts";
-import { Rule, GOL as Conway } from "../life-v1/rules.ts";
+import { GOL as Conway, Rule } from "../life-v1/rules.ts";
 import Universe from "./universe.ts";
 
 interface CellLocation<Dimensions extends number> {
@@ -28,7 +28,9 @@ export default abstract class Cell<Dimensions extends number, Behavior extends s
     const { universe, position } = to;
 
     const sameUniverse = this.universe === universe;
-    const samePosition = this.position?.every((scalar, dimension) => scalar === position[dimension]);
+    const samePosition = this.position?.every((scalar, dimension) =>
+      scalar === position[dimension]
+    );
     if (sameUniverse && samePosition) return;
 
     this.banish();
@@ -71,7 +73,9 @@ export class GOL extends Cell<2, GOLBehavior> {
   static initialize(universe: Universe<2>) {}
 }
 
-export abstract class UniversePlugin<Genus extends Cell<CellDimensions<Genus>, CellBehavior<Genus>>> {
+export abstract class UniversePlugin<
+  Genus extends Cell<CellDimensions<Genus>, CellBehavior<Genus>>,
+> {
   constructor(private universe: Universe<CellDimensions<Genus>>) {}
 
   abstract initialize(): void;

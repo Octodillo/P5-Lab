@@ -77,7 +77,9 @@ class GameOfLife extends Sketch<typeof Controller> {
     this.life.stamp([0, 0], GosperGliderGun);
   }
   override update(): void {
-    if (this.controls.values.auto) this.approachTargetFit(this.controls.values.padding, Magic.autoFitLerpFactor);
+    if (this.controls.values.auto) {
+      this.approachTargetFit(this.controls.values.padding, Magic.autoFitLerpFactor);
+    }
     if (!this.controls.values.running) return;
     this.life.update();
     this.controls.set("generation", Number(this.controls.values.generation) + 1 + "");
@@ -90,7 +92,9 @@ class GameOfLife extends Sketch<typeof Controller> {
     p5.translate(p5.width / 2 + this.viewPosition[0], p5.height / 2 + this.viewPosition[1]);
     p5.scale(this.viewScale);
 
-    this.life.all().forEach(({ item: { rule, decay }, position }) => this.drawCell(rule, position, { decay }));
+    this.life.all().forEach(({ item: { rule, decay }, position }) =>
+      this.drawCell(rule, position, { decay })
+    );
 
     this.controls.values.rule;
 

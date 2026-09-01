@@ -56,9 +56,18 @@ Deno.test("blinker oscillates between horizontal and vertical", () => {
   life.update();
 
   // Should return to horizontal
-  assert(!!life.get([0, 0]) && !life.get([0, 0])!.isDead(), "blinker period 2: [0,0] should be alive");
-  assert(!!life.get([1, 0]) && !life.get([1, 0])!.isDead(), "blinker period 2: [1,0] should be alive");
-  assert(!!life.get([2, 0]) && !life.get([2, 0])!.isDead(), "blinker period 2: [2,0] should be alive");
+  assert(
+    !!life.get([0, 0]) && !life.get([0, 0])!.isDead(),
+    "blinker period 2: [0,0] should be alive",
+  );
+  assert(
+    !!life.get([1, 0]) && !life.get([1, 0])!.isDead(),
+    "blinker period 2: [1,0] should be alive",
+  );
+  assert(
+    !!life.get([2, 0]) && !life.get([2, 0])!.isDead(),
+    "blinker period 2: [2,0] should be alive",
+  );
 });
 
 // --- Placing on an occupied position should not corrupt state ---
@@ -192,7 +201,10 @@ Deno.test("GOL cell is deleted on the same tick it dies", () => {
 
   // With no decay rule, the cell should be fully gone — not lingering as dead
   const cell = life.get([5, 5]);
-  assert(!cell, `GOL cell should be deleted immediately, but it still exists (decay=${cell?.decay})`);
+  assert(
+    !cell,
+    `GOL cell should be deleted immediately, but it still exists (decay=${cell?.decay})`,
+  );
 });
 
 // --- Decaying cells should not block births ---

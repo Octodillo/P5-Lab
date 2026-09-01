@@ -1,6 +1,8 @@
 import { Construction } from "./lib.ts";
 
-export const hexagon = (_: { construction: Construction; prefix: string; center: string; edge: string }) => {
+export const hexagon = (
+  _: { construction: Construction; prefix: string; center: string; edge: string },
+) => {
   _.construction
     .line({
       name: `${_.prefix}_OU`,

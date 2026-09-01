@@ -1,5 +1,5 @@
-import { section, row, button, divider } from "../../controls.ts";
-import { Sketch, receive } from "../../lab.ts";
+import { button, divider, row, section } from "../../controls.ts";
+import { receive, Sketch } from "../../lab.ts";
 import { hexagon } from "./constructions.ts";
 import { Construction } from "./lib.ts";
 
@@ -7,7 +7,12 @@ const Controller = [
   section("Drawing", []),
   divider(),
   section("Elementary", [
-    row([button("hand", "Hand"), button("point", "Point"), button("line", "Line"), button("circle", "Circle")]),
+    row([
+      button("hand", "Hand"),
+      button("point", "Point"),
+      button("line", "Line"),
+      button("circle", "Circle"),
+    ]),
   ]),
   section("Compound", [
     button("intersection", "Intersection"),

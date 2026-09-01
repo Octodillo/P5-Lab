@@ -259,7 +259,7 @@ export class Construction extends Map<string, Point | Line | Circle> {
   }
 
   draw() {
-    this.forEach(o => {
+    this.forEach((o) => {
       if (!o) return;
       if (o instanceof Point) o.reset();
       if (this.intermediatesVisible || o.visible) o.draw();
@@ -293,7 +293,12 @@ export class Construction extends Map<string, Point | Line | Circle> {
   }): Construction {
     return this.set(
       params.name,
-      new FreePoint(this.p5, params.vector, params.visible ?? false, params.color ?? this.defaultColor),
+      new FreePoint(
+        this.p5,
+        params.vector,
+        params.visible ?? false,
+        params.color ?? this.defaultColor,
+      ),
     );
   }
   public readonly P = this.point;
@@ -339,7 +344,9 @@ export class Construction extends Map<string, Point | Line | Circle> {
    * @param color The color to draw this circle with
    * @chainable
    */
-  circle(params: { name: string; center: string; edge: string; visible?: boolean; color?: p5.Color }): Construction {
+  circle(
+    params: { name: string; center: string; edge: string; visible?: boolean; color?: p5.Color },
+  ): Construction {
     return this.set(
       params.name,
       new Circle(
@@ -400,7 +407,7 @@ export class Construction extends Map<string, Point | Line | Circle> {
     const o1 = this.get(params.object1);
     const o2 = this.get(params.object2);
 
-    if (o1 instanceof Line && o2 instanceof Line)
+    if (o1 instanceof Line && o2 instanceof Line) {
       this.set(
         params.name,
         new LinesIntersectionPoint(
@@ -411,7 +418,7 @@ export class Construction extends Map<string, Point | Line | Circle> {
           params.color ?? this.defaultColor,
         ),
       );
-    else if (o1 instanceof Line && o2 instanceof Circle)
+    } else if (o1 instanceof Line && o2 instanceof Circle) {
       this.set(
         params.name,
         new LineCircleIntersectionPoint(
@@ -423,7 +430,7 @@ export class Construction extends Map<string, Point | Line | Circle> {
           params.color ?? this.defaultColor,
         ),
       );
-    else if (o1 instanceof Circle && o2 instanceof Line)
+    } else if (o1 instanceof Circle && o2 instanceof Line) {
       this.set(
         params.name,
         new LineCircleIntersectionPoint(
@@ -435,7 +442,7 @@ export class Construction extends Map<string, Point | Line | Circle> {
           params.color ?? this.defaultColor,
         ),
       );
-    else if (o1 instanceof Circle && o2 instanceof Circle)
+    } else if (o1 instanceof Circle && o2 instanceof Circle) {
       this.set(
         params.name,
         new CirclesIntersectionPoint(
@@ -447,7 +454,7 @@ export class Construction extends Map<string, Point | Line | Circle> {
           params.color ?? this.defaultColor,
         ),
       );
-    else console.error("Cannot add intersection involving Point");
+    } else console.error("Cannot add intersection involving Point");
 
     return this;
   }

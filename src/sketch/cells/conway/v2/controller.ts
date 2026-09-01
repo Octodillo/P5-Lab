@@ -1,17 +1,17 @@
 import {
-  section,
-  checkbox,
-  row,
   button,
-  slider,
+  checkbox,
   divider,
-  radio,
-  tabs,
-  select,
-  option,
-  textInput,
   numberInput,
+  option,
+  radio,
+  row,
+  section,
+  select,
+  slider,
   stat,
+  tabs,
+  textInput,
 } from "../../../../controls.ts";
 
 import Rules from "../rules.ts";
@@ -26,7 +26,11 @@ export default [
   divider(),
   section("Input", [
     row([radio("input", "cell", "Cell", true), radio("input", "stamp", "Stamp")]),
-    row([radio("input", "move", "Move"), radio("input", "pick", "Pick"), radio("input", "erase", "Erase")]),
+    row([
+      radio("input", "move", "Move"),
+      radio("input", "pick", "Pick"),
+      radio("input", "erase", "Erase"),
+    ]),
     divider(),
     tabs("input", {
       cell: [
@@ -37,7 +41,10 @@ export default [
           "Rule",
         ),
         textInput("ruleName", undefined, undefined, "Name"),
-        row([textInput("ruleBorn", undefined, undefined, "Born"), textInput("ruleLive", undefined, undefined, "Live")]),
+        row([
+          textInput("ruleBorn", undefined, undefined, "Born"),
+          textInput("ruleLive", undefined, undefined, "Live"),
+        ]),
         row([
           numberInput("ruleDecay", undefined, undefined, "Decay"),
           textInput("ruleColor", undefined, undefined, "Color"),
@@ -54,8 +61,16 @@ export default [
         row([checkbox("stampRotate", "Rotate on click", false)]),
         stat("stampSize", "Size: —"),
       ],
-      move: [stat("viewCenter", "Center: (0, 0)"), stat("viewScale", "Scale: 1.0×"), button("resetView", "Reset View")],
-      pick: [stat("pickedRule", "Rule: —"), stat("pickedPos", "Position: —"), button("copyRule", "Copy to Cell Mode")],
+      move: [
+        stat("viewCenter", "Center: (0, 0)"),
+        stat("viewScale", "Scale: 1.0×"),
+        button("resetView", "Reset View"),
+      ],
+      pick: [
+        stat("pickedRule", "Rule: —"),
+        stat("pickedPos", "Position: —"),
+        button("copyRule", "Copy to Cell Mode"),
+      ],
       erase: [
         row([radio("eraseMode", "single", "Single", true), radio("eraseMode", "brush", "Brush")]),
         numberInput("eraseBrushSize", 3, "Size", "Brush size"),

@@ -10,7 +10,13 @@ export interface Stamp {
 
 export const Glider: Stamp = {
   rule: GOL,
-  positions: [new p5.Vector(0, 0), new p5.Vector(1, 0), new p5.Vector(2, 0), new p5.Vector(2, 1), new p5.Vector(1, 2)],
+  positions: [
+    new p5.Vector(0, 0),
+    new p5.Vector(1, 0),
+    new p5.Vector(2, 0),
+    new p5.Vector(2, 1),
+    new p5.Vector(1, 2),
+  ],
 };
 
 export const SmallExploder: Stamp = {

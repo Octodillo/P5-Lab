@@ -1,7 +1,8 @@
-import { Coordinate, TupleMap, Tuple } from "../../common.ts";
+import { Coordinate, Tuple, TupleMap } from "../../common.ts";
 import Cell from "./cell.ts";
 
-export default class Universe<Dimensions extends number> extends TupleMap<Cell<Dimensions, string>, Dimensions> {
+export default class Universe<Dimensions extends number>
+  extends TupleMap<Cell<Dimensions, string>, Dimensions> {
   public readonly origin = () => new Array(this.dimentionality).fill(0);
   public readonly one = () => new Array(this.dimentionality).fill(1);
   public readonly unit = (direction: number) => {
@@ -43,7 +44,7 @@ export default class Universe<Dimensions extends number> extends TupleMap<Cell<D
     const recurse = (idx: number) => {
       if (idx === dims) {
         // skip the center itself (all-zero offset)
-        if (offsets.every(o => o === 0)) return;
+        if (offsets.every((o) => o === 0)) return;
         const coord = (center as number[]).map((c, i) => c + offsets[i]) as Coordinate<Dimensions>;
         results.push(coord);
         return;
@@ -61,6 +62,6 @@ export default class Universe<Dimensions extends number> extends TupleMap<Cell<D
 
   public readonly neighbors = (center: Coordinate<Dimensions>, distance: number) =>
     this.neighborhood(center, distance)
-      .map(pos => this.get(pos))
-      .filter(maybeCell => !!maybeCell);
+      .map((pos) => this.get(pos))
+      .filter((maybeCell) => !!maybeCell);
 }

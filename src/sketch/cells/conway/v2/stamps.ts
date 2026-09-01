@@ -140,4 +140,11 @@ export const LaserGun: Stamp = {
   ],
 };
 
-export default { Glider, SmallExploder, LightweightSpaceship, Tumbler, GosperGliderGun, LaserGun } as const;
+export default {
+  Glider,
+  SmallExploder,
+  LightweightSpaceship,
+  Tumbler,
+  GosperGliderGun,
+  LaserGun,
+} as const;

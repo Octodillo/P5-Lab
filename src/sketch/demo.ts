@@ -12,7 +12,7 @@ import {
   SliderDesc,
   stat,
 } from "../controls.ts";
-import { Sketch, receive } from "../lab.ts";
+import { receive, Sketch } from "../lab.ts";
 
 const Shapes = ["square", "circle", "triangle"] as const;
 type Shape = (typeof Shapes)[number];

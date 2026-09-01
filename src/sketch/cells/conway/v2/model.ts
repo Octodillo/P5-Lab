@@ -58,7 +58,7 @@ export class Cell {
     } else {
       this.disconnect();
       this.neighbors = this.life.neighbors(this.position);
-      this.neighbors.forEach(neighbor => neighbor.connect(this));
+      this.neighbors.forEach((neighbor) => neighbor.connect(this));
     }
   }
 
@@ -70,9 +70,11 @@ export class Cell {
       neighbor.disconnect(this);
     } else {
       // Copy array before iterating, since recursive disconnect() calls will modify it
-      [...this.neighbors].forEach(neighbor => neighbor.disconnect(this));
+      [...this.neighbors].forEach((neighbor) => neighbor.disconnect(this));
       this.neighbors = [];
-      this.life.surroundingPositions(this.position, true).forEach(position => this.life.destablize(position));
+      this.life.surroundingPositions(this.position, true).forEach((position) =>
+        this.life.destablize(position)
+      );
     }
   }
 
@@ -121,7 +123,7 @@ export class Life {
   delete(position: number2) {
     this.get(position)?.disconnect();
     this.cells.unset(position);
-    this.surroundingPositions(position, true).forEach(pos => this.destablize(pos));
+    this.surroundingPositions(position, true).forEach((pos) => this.destablize(pos));
   }
 
   surroundingPositions(center: number2, includeCenter = false): number2[] {
@@ -146,25 +148,25 @@ export class Life {
   destablize = (position: number2) => this.unstable.add(position);
   neighbors = (center: number2) =>
     this.surroundingPositions(center)
-      .map(position => this.get(position))
+      .map((position) => this.get(position))
       .filter((cell): cell is Cell => cell !== undefined && !cell.isDead());
 
   update() {
     const actions = this.unstable
       .getItems()
-      .map(position => {
+      .map((position) => {
         const cell = this.get(position);
         if (cell) return { cell, behavior: cell.getNextBehavior() as CellBehavior };
         const neighbors = this.neighbors(position);
         const candidates = neighbors
-          .filter(neighbor => neighbor.rule.born.includes(neighbors.length))
-          .map(neighbor => neighbor.rule);
+          .filter((neighbor) => neighbor.rule.born.includes(neighbors.length))
+          .map((neighbor) => neighbor.rule);
         if (candidates.length === 0) return undefined;
         const chosen = candidates[Math.floor(Math.random() * candidates.length)];
         const born = new Cell(this, chosen, position);
         return { cell: born, behavior: "born" as CellBehavior };
       })
-      .filter(action => !!action);
+      .filter((action) => !!action);
 
     this.unstable.clear();
 

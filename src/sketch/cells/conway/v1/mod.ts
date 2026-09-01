@@ -3,7 +3,17 @@
 import { initSketch } from "../../sketch.ts";
 import { LifeModel } from "./life.ts";
 import * as Rules from "../rules.ts";
-import { section, button, divider, radio, row, select, option, textInput, stat } from "../../controls.ts";
+import {
+  button,
+  divider,
+  option,
+  radio,
+  row,
+  section,
+  select,
+  stat,
+  textInput,
+} from "../../controls.ts";
 
 type BrushType = "draw" | "erase" | "stamp";
 

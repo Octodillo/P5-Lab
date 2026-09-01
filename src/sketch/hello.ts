@@ -1,5 +1,5 @@
-import { slider, section, textInput } from "../controls.ts";
-import { Sketch, receive } from "../lab.ts";
+import { section, slider, textInput } from "../controls.ts";
+import { receive, Sketch } from "../lab.ts";
 import { Pool } from "../common.ts";
 
 interface Particle {
@@ -47,7 +47,7 @@ class Hello extends Sketch<typeof Controller> {
       hue: p5.random(180, 280), // Purple to blue range
     }));
 
-    this.controls.subscribe("particleCount", count => this.particles.resize(count));
+    this.controls.subscribe("particleCount", (count) => this.particles.resize(count));
   }
 
   update(): void {
@@ -55,11 +55,16 @@ class Hello extends Sketch<typeof Controller> {
 
     this.particles.forEach((particle, index) => {
       // Float across the screen
-      particle.x +=
-        (particle.vx + wave(this.time, 0.5, particleTranslationAmplitude, particle.y * 0.1 + index * 0.7)) *
+      particle.x += (particle.vx +
+        wave(this.time, 0.5, particleTranslationAmplitude, particle.y * 0.1 + index * 0.7)) *
         particleWavelength;
-      particle.y +=
-        (particle.vy + wave(this.time, 0.3, particleTranslationAmplitude * 0.6, particle.x * 0.1 + index * 0.9)) *
+      particle.y += (particle.vy +
+        wave(
+          this.time,
+          0.3,
+          particleTranslationAmplitude * 0.6,
+          particle.x * 0.1 + index * 0.9,
+        )) *
         particleWavelength;
 
       // Wrap around edges
@@ -88,7 +93,7 @@ class Hello extends Sketch<typeof Controller> {
     } = this.controls.values;
 
     // Draw particles
-    this.particles.forEach(particle => {
+    this.particles.forEach((particle) => {
       // Draw glow
       const alpha = 0.3 * (1 + wave(this.time, 0.3, particleAlphaAmplitude, particle.hue * 0.1));
       const diameter = particle.radius * 2;
@@ -124,7 +129,11 @@ class Hello extends Sketch<typeof Controller> {
     // Subtitle
     p5.textSize(Math.min(20, p5.width * 0.035));
     p5.fill(220, 30, 80, 0.7);
-    p5.text(maxxed ? "You. I like you." : "Select a sketch from the sidebar to begin", centerX, centerY + 40);
+    p5.text(
+      maxxed ? "You. I like you." : "Select a sketch from the sidebar to begin",
+      centerX,
+      centerY + 40,
+    );
   }
 
   private time = 0;
