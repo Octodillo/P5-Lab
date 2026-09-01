@@ -16,6 +16,8 @@ deno lint         # Lint with recommended rules
 deno check src/   # Type-check (uses dom + deno.ns libs)
 ```
 
+**Do not start the dev server.** Aria runs it. Never launch `deno task dev` or `deno task serve` — not in the background, not for a quick smoke test. Ask Aria to check the browser instead.
+
 There are no test commands configured. Some sketches have ad-hoc test files (e.g. `src/sketch/cells/conway/v2/test.ts`).
 
 ## Architecture
