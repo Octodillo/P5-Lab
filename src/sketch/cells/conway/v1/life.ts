@@ -672,16 +672,6 @@ export class LifeModel {
 
     // Set to the newly saved rule
     (this.ruleSelect as any).value(`custom:${this.selectedRule.name}`);
-    
-    const volatileCount = Array.from(this.volatile.values()).reduce((sum, ySet) => sum + ySet.size, 0);
-    const hoverText = this.getHoverInfo();
-
-    controls.set("cellCount", `Cells: ${this.allCells().length}`);
-    controls.set("volatile", `Active: ${volatileCount}`);
-    controls.set("scale", `Zoom: ${this.config.scale.toFixed(2)}x`);
-    controls.set("center", `Pan: (${this.config.center.x.toFixed(0)}, ${this.config.center.y.toFixed(0)})`);
-    controls.set("hoverInfo", hoverText); this.hoverInfo.html(hoverText);
-    }
   }
 
   private getHoverInfo(): string {
