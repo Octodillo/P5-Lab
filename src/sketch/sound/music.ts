@@ -3,7 +3,7 @@ import { assert } from "https://deno.land/std@0.208.0/assert/assert.ts";
 const Magic = {
   coreFreq: 440,
   corePitch: 48,
-  halfStepFactor: Math.pow(2, -1 / 12),
+  halfStepFactor: Math.pow(2, 1 / 12),
 } as const;
 
 const frequency = (pitch: number | PitchName) => Magic.coreFreq * Math.pow(2, pitch - Magic.corePitch);
