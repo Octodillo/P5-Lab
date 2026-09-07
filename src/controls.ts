@@ -232,6 +232,21 @@ export const tabs = <
 // =============================================================================
 
 type Observer = (value: ControlValue) => void;
+
+let onHandlerError: ((name: string, cause: unknown) => void) | undefined;
+
+/**
+ * Route throws from control subscribers somewhere useful.
+ *
+ * Set by the lab at startup so a failing handler becomes a report naming the
+ * control rather than an uncaught error in a DOM listener. Kept as a hook here
+ * rather than a constructor argument because `controls.ts` must not import
+ * `lab.ts` — that dependency runs the other way.
+ */
+export const setControlErrorHandler = (fn: (name: string, cause: unknown) => void) => {
+  onHandlerError = fn;
+};
+
 type LiveEntry = {
   el: HTMLElement;
   get(): ControlValue;
@@ -333,7 +348,17 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
   // --- private -------------------------------------------------------------
 
   private notify(name: string, value: ControlValue) {
-    this.observers.get(name)?.forEach((cb) => cb(value));
+    this.observers.get(name)?.forEach((cb) => {
+      // Each observer is isolated: one sketch callback throwing shouldn't stop
+      // the others from seeing the change, and shouldn't escape into whatever
+      // DOM event happened to trigger it — that loses the control's name.
+      try {
+        cb(value);
+      } catch (cause) {
+        if (!onHandlerError) throw cause;
+        onHandlerError(name, cause);
+      }
+    });
   }
 
   private register(name: string, value: ControlValue, entry: LiveEntry) {

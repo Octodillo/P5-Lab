@@ -56,7 +56,23 @@
     "sorting": {
       "name": "Sorting Visualizer",
       "entry": "sorting/sketch.ts"
+    },
+    "report-lab": {
+      "name": "Error Reporting",
+      "entry": "report-lab/sketch.ts",
+      "description": "Trigger every warning, error and fatal path on purpose"
     }
   },
-  "sidebar": ["", "demo", "controls-style-lab", "life", "boids", "boids2", "euclidean", "games/minesweeper", "sorting"]
+  "sidebar": [
+    "",
+    "demo",
+    "controls-style-lab",
+    "life",
+    "boids",
+    "boids2",
+    "euclidean",
+    "games/minesweeper",
+    "sorting",
+    "report-lab"
+  ]
 }
