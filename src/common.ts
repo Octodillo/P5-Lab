@@ -545,3 +545,7 @@ export type DeepPartial<T> = {
       ? ReadonlyArray<DeepPartial<U>>
       : DeepPartial<T[P]>;
 };
+
+type AllKeys<T> = T extends unknown ? keyof T : never;
+
+export type OneOf<T, U = T> = T extends unknown ? T & { [K in Exclude<AllKeys<U>, keyof T>]?: never } : never;
