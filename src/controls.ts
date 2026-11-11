@@ -368,10 +368,44 @@ export class Controls<S extends readonly ControlDesc[] = readonly ControlDesc[]>
 
   private buildSection(desc: SectionDesc, parent: HTMLElement) {
     const sec = el("div", "sketch-controls__section");
-    const lbl = el("div", "sketch-controls__label");
-    lbl.textContent = desc.label;
-    sec.appendChild(lbl);
-    for (const child of desc.controls) this.buildNode(child, sec);
+    const header = el("div", "sketch-controls__label sketch-controls__section-toggle");
+    header.setAttribute("role", "button");
+    header.tabIndex = 0;
+    const caret = el("span", "sketch-controls__section-caret");
+    caret.setAttribute("aria-hidden", "true");
+    caret.textContent = "▾";
+    header.append(caret, span(desc.label));
+
+    const body = el("div", "sketch-controls__section-body");
+    for (const child of desc.controls) this.buildNode(child, body);
+
+    const storeKey = `sketch-controls:section-collapsed:${desc.label}`;
+    let collapsed = false;
+    try {
+      collapsed = localStorage.getItem(storeKey) === "1";
+    } catch { /* localStorage unavailable */ }
+
+    const apply = () => {
+      sec.classList.toggle("is-collapsed", collapsed);
+      header.setAttribute("aria-expanded", String(!collapsed));
+    };
+    const toggle = () => {
+      collapsed = !collapsed;
+      try {
+        localStorage.setItem(storeKey, collapsed ? "1" : "0");
+      } catch { /* localStorage unavailable */ }
+      apply();
+    };
+    header.addEventListener("click", toggle);
+    header.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      }
+    });
+    apply();
+
+    sec.append(header, body);
     parent.appendChild(sec);
   }
 

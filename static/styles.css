@@ -281,6 +281,39 @@ aside .content {
   gap: 8px;
 }
 
+.sketch-controls__section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.sketch-controls__section-toggle:hover {
+  color: var(--accent-grey-9, var(--accent-grey-7));
+}
+
+.sketch-controls__section-caret {
+  font-size: 8px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.sketch-controls__section.is-collapsed .sketch-controls__section-caret {
+  transform: rotate(-90deg);
+}
+
+.sketch-controls__section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sketch-controls__section.is-collapsed .sketch-controls__section-body {
+  display: none;
+}
+
 .sketch-controls__label {
   font-size: 11px;
   font-weight: 600;
@@ -288,6 +321,10 @@ aside .content {
   letter-spacing: 0.05em;
   color: var(--accent-grey-7);
   margin-bottom: 4px;
+}
+
+.sketch-controls__section-toggle .sketch-controls__label {
+  margin-bottom: 0;
 }
 
 .sketch-controls__divider {
