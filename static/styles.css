@@ -902,3 +902,382 @@ aside .content {
   border-color: #dc2626;
   color: #ef4444;
 }
+
+/* =============================================================================
+   Error reporting — toasts for the recoverable, an overlay for the terminal.
+
+   Tone matters here: these appear when something already went wrong, so they
+   stay in the same zinc/indigo register as the rest of the lab and let a
+   single accent stripe carry the severity. Nothing flashes, nothing shouts.
+   ========================================================================== */
+
+:root {
+  --report-warning: #fbbf24;
+  --report-warning-dim: #78350f;
+  --report-error: #f87171;
+  --report-error-dim: #7f1d1d;
+}
+
+/* Anchors the fatal overlay to the sketch column instead of the whole page,
+   so the sketch list and controls stay reachable while it's up. */
+.sketch-viewport {
+  position: relative;
+}
+
+/* The idle "Select a sketch to begin" hint would otherwise show through. */
+.sketch-viewport:has(.report-overlay) .sketch-viewport__canvas:empty::after {
+  content: none;
+}
+
+/* --- Toasts --------------------------------------------------------------- */
+
+.report-toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  /* The strip is only a rail; clicks pass through to the canvas between toasts. */
+  pointer-events: none;
+}
+
+.report-toast {
+  pointer-events: auto;
+  position: relative;
+  width: min(24rem, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  background: var(--accent-grey-1);
+  border: 1px solid var(--accent-grey-3);
+  border-left: 3px solid var(--accent-grey-4);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+  color: var(--accent-grey-e);
+  font-size: 13px;
+  line-height: 1.45;
+
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.report-toast--in {
+  opacity: 1;
+  transform: none;
+}
+
+.report-toast--out {
+  opacity: 0;
+  transform: translateY(4px) scale(0.98);
+}
+
+.report-toast--warning {
+  border-left-color: var(--report-warning);
+}
+
+.report-toast--error {
+  border-left-color: var(--report-error);
+}
+
+.report-toast__icon {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  flex: 0 0 auto;
+}
+
+.report-toast--warning .report-toast__icon {
+  color: var(--report-warning);
+}
+
+.report-toast--error .report-toast__icon {
+  color: var(--report-error);
+}
+
+.report-toast__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.report-toast__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* A repeat count, so a per-frame failure reads as one line rather than a pile. */
+.report-toast__count {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-grey-3);
+  color: var(--accent-grey-a);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.report-toast__count::before {
+  content: "×";
+  opacity: 0.7;
+  margin-right: 1px;
+}
+
+.report-toast--pulse {
+  animation: report-pulse 0.35s ease;
+}
+
+@keyframes report-pulse {
+  0% {
+    transform: none;
+  }
+  40% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+.report-toast__hint {
+  margin: 0;
+  color: var(--accent-grey-a);
+  font-size: 12.5px;
+}
+
+.report-toast__source,
+.report-overlay__source {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--accent-grey-7);
+  overflow-wrap: anywhere;
+}
+
+.report-toast__close {
+  align-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--accent-grey-7);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.report-toast__close:hover {
+  background: var(--accent-grey-3);
+  color: var(--accent-grey-e);
+}
+
+.report-toast__actions,
+.report-overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* --- Fatal overlay -------------------------------------------------------- */
+
+.report-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  /* Leaves the last rendered frame faintly visible underneath — useful when
+     the failure is visual, and gentler than a hard wipe. */
+  background: rgb(10 10 10 / 0.86);
+  backdrop-filter: blur(3px);
+  animation: report-fade 0.2s ease;
+}
+
+@keyframes report-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.report-overlay__card {
+  width: min(34rem, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  background: var(--accent-grey-1);
+  border: 1px solid var(--accent-grey-3);
+  border-top: 3px solid var(--report-error);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.6);
+}
+
+.report-overlay__icon {
+  width: 28px;
+  height: 28px;
+  color: var(--report-error);
+}
+
+.report-overlay__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--accent-grey-e);
+}
+
+.report-overlay__hint {
+  margin: 0;
+  color: var(--accent-grey-a);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* --- Shared bits ---------------------------------------------------------- */
+
+.report-action {
+  padding: 7px 14px;
+  background: var(--accent-grey-2);
+  border: 1px solid var(--accent-grey-3);
+  border-radius: 6px;
+  color: var(--accent-grey-e);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.report-action:hover {
+  background: var(--accent-grey-3);
+}
+
+.report-action--primary {
+  background: var(--accent-4);
+  border-color: var(--accent-6);
+  color: var(--accent-c);
+}
+
+.report-action--primary:hover {
+  background: var(--accent-6);
+}
+
+/* The developer half: present, but folded away until someone wants it. */
+.report-detail {
+  width: 100%;
+}
+
+.report-detail__summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  color: var(--accent-grey-7);
+  font-size: 12px;
+  user-select: none;
+}
+
+.report-detail__summary::-webkit-details-marker {
+  display: none;
+}
+
+.report-detail__summary::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 4px solid currentColor;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  transition: transform 0.15s ease;
+}
+
+.report-detail[open] .report-detail__summary::before {
+  transform: rotate(90deg);
+}
+
+.report-detail__summary:hover {
+  color: var(--accent-grey-a);
+}
+
+.report-detail__shell {
+  position: relative;
+  margin-top: 6px;
+}
+
+.report-detail__body {
+  max-height: 15rem;
+  margin: 0;
+  padding: 10px 12px;
+  padding-right: 68px;
+  background: var(--grey-0);
+  border: 1px solid var(--accent-grey-2);
+  border-radius: 6px;
+  color: var(--accent-grey-a);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.55;
+  /* Stack traces are wide; scroll them rather than reflow the panel. */
+  overflow: auto;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.report-detail__copy {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 3px 9px;
+  background: var(--accent-grey-2);
+  border: 1px solid var(--accent-grey-3);
+  border-radius: 4px;
+  color: var(--accent-grey-a);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: all 0.15s ease;
+}
+
+.report-detail__copy:hover {
+  opacity: 1;
+  background: var(--accent-grey-3);
+  color: var(--accent-grey-e);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-toast,
+  .report-overlay,
+  .report-toast--pulse {
+    animation: none;
+    transition: opacity 0.15s ease;
+    transform: none;
+  }
+
+  .report-toast--in,
+  .report-toast--out {
+    transform: none;
+  }
+}

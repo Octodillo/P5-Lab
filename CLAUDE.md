@@ -55,6 +55,33 @@ Available descriptors: `section`, `row`, `divider`, `tabs`, `radio`, `checkbox`,
 
 Controls support `subscribe(name, callback)` for reactive updates and `set(name, value)` for programmatic changes.
 
+### Error Reporting (`src/report.ts`)
+
+`Reporter` renders failures for two audiences at once: a plain sentence for whoever is
+watching, and the stack/source/cause chain one disclosure click away — plus an
+unconditional console mirror.
+
+- `report.warn(...)` / `report.error(...)` → toast, bottom right. The sketch keeps running.
+  Identical repeats collapse into a counter, so a per-frame failure is one line, not a pile.
+- `report.fatal(...)` → panel over the sketch viewport, with Reload and Copy details. The
+  sidebar and controls stay usable.
+
+`P5Lab` owns the single instance (`lab.report`, and `Lab.reports` for the session log in the
+console). It already wraps every lifecycle seam — module import, `setup()`, `update()`,
+`draw()`, `resize()`, teardown, control subscribers, plus `window` `error`/`unhandledrejection`
+as a backstop. **A throw in `update()` or `draw()` is fatal and stops that p5 instance**, rather
+than throwing sixty times a second.
+
+Inside a sketch, use `this.report` for things worth surfacing (`warn` for recoverable oddities,
+`fatal` when it genuinely can't continue). Anything you simply let throw is already caught.
+
+Failed imports are diagnosed by re-fetching the URL, so "didn't compile" (the dev server puts
+the real transpiler diagnostic in the 500 body), "file is missing" and "server is down" read as
+three different messages instead of one opaque browser error.
+
+`src/sketch/report-lab/sketch.ts` ("Error Reporting" in the sidebar) triggers every path on
+purpose — use it when changing any of this.
+
 ### Adding a New Sketch
 
 1. Create a file under `src/sketch/` (can be nested)
